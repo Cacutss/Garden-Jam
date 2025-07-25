@@ -1,3 +1,4 @@
 .python-version
 .venv
 *.toml
+uv.lock
