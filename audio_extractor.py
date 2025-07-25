@@ -1,6 +1,6 @@
 import librosa
 import numpy as np
-from pathlib import Path 
+from pathlib import Path
 import os
 import soundfile as sf
 
@@ -31,7 +31,7 @@ NUM_BIN_RANGES = 10 #these are decided by the way the visualizer is designed
 
 NUM_BINS = 128 #these are then divided into ranges based on an exponential scale that represents how frequencies work.
 
-DEBUG = True
+DEBUG = False
 
 class AudioDataSet():
 
@@ -46,6 +46,11 @@ class AudioDataSet():
         if len(raw_audio.shape) > 1:  # Stereo
             self.__left_channel = raw_audio[:, 0]
             self.__right_channel = raw_audio[:, 1]
+
+            #see 
+            self.__processed_center = []
+            self.__processed_left = []
+            self.__processed_right = []
 
 
             #passing hop_length to divide the channels into TARGET_FPS fps.
@@ -63,6 +68,29 @@ class AudioDataSet():
         self.num_of_ranges = 10
         self.__frequencies_to_assign = librosa.fft_frequencies(sr=self.__sample_rate, n_fft=128)
         self.list_freq_ranges = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000] #Standard 10 band
+
+        print("Precomputing all audio frames...")
+        self.__processed_left = []
+        self.__processed_right = []
+        self.__processed_center = []
+        
+        total_frames = self.__left_magnitude.shape[1]
+        for frame_index in range(total_frames):
+            # Process each frame
+            left_frame = self.get_visual_ranges_init(frame_index, "left")
+            right_frame = self.get_visual_ranges_init(frame_index, "right")
+            
+            # Compute center (max of left/right)
+            center_frame = []
+            for i in range (0, len(left_frame)):
+                if left_frame[i] > right_frame[i]:
+                    center_frame.append(left_frame[i])
+                else:
+                    center_frame.append(right_frame[i])
+            
+            self.__processed_left.append(left_frame)
+            self.__processed_right.append(right_frame)
+            self.__processed_center.append(center_frame)
 
 
     def get_audio_frame_data(self, frame_index, direction = "left"):
@@ -123,7 +151,7 @@ class AudioDataSet():
         return dbfs_ranges
 
         
-    def get_visual_ranges(self, frame_index, direction="center"):
+    def get_visual_ranges_init(self, frame_index, direction="center"):
         # This is the "master function" that takes a frame index and a direction and returns the frame magnitude data in that direction
         # By default - it will return the max values of either L/R as a representation of centered audio.
         # it also scales the result to a 0-255 range (perfect for RGB values to use in pygame).
@@ -143,6 +171,20 @@ class AudioDataSet():
             return list(map(lambda dbfs: int(((dbfs + 60) / 60) * 255),self.get_dbfs_ranges(frame_index, direction)))
         
         raise Exception (f"ERROR: Invalid direction string: {direction}")
+    
+    def get_visual_ranges(self, frame_index, direction="center"):
+        #and this is the one that's posing as the master function but it acually just returns a value.
+        #much better to generate everything at the init stage than to calculate it every time.
+        if direction == "center":
+            return self.__processed_center[frame_index]
+        elif direction == "left":
+            return self.__processed_left[frame_index]
+        elif direction == "right":
+            return self.__processed_right[frame_index]
+        else:
+            raise ValueError(f"Invalid direction: {direction}")
+
+
         
 
 if DEBUG:
