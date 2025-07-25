@@ -10,16 +10,17 @@ The purpose of this file (and class) is to take an audio file path, extract the 
 To initialize: 
 Audio = AudioDataSet(path/to/your/file.wav)
 
+To get the number of frames to render:
+num_frames = Audio.get_total_frames()
+
 To get the data for a single frame:
 
-ranges = Audio.get_visual_ranges(frame_index, direction= "left" (default) or "right")
+ranges = Audio.get_visual_ranges(frame_index, direction= "left" (default) or "right" or "center")
 
 This will output a list of values between 0-255 (0 = silent, 255 = peak amplitude) on each frequency band
 You can see what the bands are in Audio.list_freq_ranges
 
 by default each one of those lists will have 10 entries, where 0 index is for the lowest notes and 9 index is for the highest notes.
-
-
 
 """
 FILE_PATH = Path('Test assets')/'beeps.wav'
@@ -30,7 +31,7 @@ NUM_BIN_RANGES = 10 #these are decided by the way the visualizer is designed
 
 NUM_BINS = 128 #these are then divided into ranges based on an exponential scale that represents how frequencies work.
 
-DEBUG = False
+DEBUG = True
 
 class AudioDataSet():
 
@@ -122,11 +123,27 @@ class AudioDataSet():
         return dbfs_ranges
 
         
-    def get_visual_ranges(self, frame_index, direction="left"):
+    def get_visual_ranges(self, frame_index, direction="center"):
         # This is the "master function" that takes a frame index and a direction and returns the frame magnitude data in that direction
+        # By default - it will return the max values of either L/R as a representation of centered audio.
         # it also scales the result to a 0-255 range (perfect for RGB values to use in pygame).
+        if direction == "center":
+            L = list(map(lambda dbfs: int(((dbfs + 60) / 60) * 255),self.get_dbfs_ranges(frame_index, "left")))
+            R = list(map(lambda dbfs: int(((dbfs + 60) / 60) * 255),self.get_dbfs_ranges(frame_index, "right")))
+
+            Center_list = []
+            for i in range (0,len(L)):
+                if L[i] > R[i]:
+                    Center_list.append(L[i])
+                else:
+                    Center_list.append(R[i])
+            return Center_list
         
-        return list(map(lambda dbfs: int(((dbfs + 60) / 60) * 255),self.get_dbfs_ranges(frame_index, direction)))
+        elif direction == "left" or direction == "right":
+            return list(map(lambda dbfs: int(((dbfs + 60) / 60) * 255),self.get_dbfs_ranges(frame_index, direction)))
+        
+        raise Exception (f"ERROR: Invalid direction string: {direction}")
+        
 
 if DEBUG:
     n = AudioDataSet(FILE_PATH)
@@ -140,4 +157,8 @@ if DEBUG:
     # Test a frame that should have audio (not frame 0)
     print(f"\n--- Testing frame with audio (frame 50) ---")
     frame_50_visual = n.get_visual_ranges(50, 'left')
-    print(f"Frame 50 visual ranges: {frame_50_visual}")
+    print(f"Frame 50 visual ranges (LEFT): {frame_50_visual}")
+    frame_50_visual = n.get_visual_ranges(50, 'right')
+    print(f"Frame 50 visual ranges (RIGHT): {frame_50_visual}")
+    frame_50_visual = n.get_visual_ranges(50)
+    print(f"Frame 50 visual ranges (CENTER): {frame_50_visual}")
