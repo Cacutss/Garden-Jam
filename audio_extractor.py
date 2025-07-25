@@ -29,9 +29,9 @@ TARGET_FPS = 60
 
 NUM_BIN_RANGES = 10 #these are decided by the way the visualizer is designed
 
-NUM_BINS = 128 #these are then divided into ranges based on an exponential scale that represents how frequencies work.
+NUM_BINS = 1024 #these are then divided into ranges based on an exponential scale that represents how frequencies work.
 
-DEBUG = False
+DEBUG = True
 
 class AudioDataSet():
 
@@ -66,7 +66,7 @@ class AudioDataSet():
             self.__left_magnitude = self.__right_magnitude = np.abs(librosa.stft(raw_audio,hop_length = hop_length, n_fft=NUM_BINS))
 
         self.num_of_ranges = 10
-        self.__frequencies_to_assign = librosa.fft_frequencies(sr=self.__sample_rate, n_fft=128)
+        self.__frequencies_to_assign = librosa.fft_frequencies(sr=self.__sample_rate, n_fft=NUM_BINS)
         self.list_freq_ranges = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000] #Standard 10 band
 
         print("Precomputing all audio frames...")
@@ -190,7 +190,7 @@ class AudioDataSet():
 if DEBUG:
     n = AudioDataSet(FILE_PATH)
     
-    # ... your existing debug code ...
+    print(f"Num_Of_Frames: {n.get_total_frames()}")
     
     # Check the final visual ranges
     visual_ranges = n.get_visual_ranges(0, 'left')
@@ -204,3 +204,11 @@ if DEBUG:
     print(f"Frame 50 visual ranges (RIGHT): {frame_50_visual}")
     frame_50_visual = n.get_visual_ranges(50)
     print(f"Frame 50 visual ranges (CENTER): {frame_50_visual}")
+
+    # Check which ranges are consistently zero
+    frame_50 = n.get_visual_ranges(50, 'left')
+    print("Frame 50 ranges:")
+    bands = ['31Hz', '62Hz', '125Hz', '250Hz', '500Hz', '1kHz', '2kHz', '4kHz', '8kHz', '16kHz']
+    for i, (band, value) in enumerate(zip(bands, frame_50)):
+        status = "ACTIVE" if value > 0 else "SILENT"
+        print(f"  {band:>5}: {value:>3} {status}")
