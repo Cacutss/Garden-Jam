@@ -1,5 +1,6 @@
 import pygame
 import numpy
+import frogboard
 import subprocess
 import audio_extractor
 import threading
@@ -13,7 +14,7 @@ ZEROES = "00000000"
 class Bar:
     def __init__(self,x:int,y:int,width:int):
         self.rect = pygame.Rect((x,y),(width,0))
-        self.color = pygame.Color(255,255,255,120)
+        self.color = pygame.Color(255,255,255,30)
 
     def update(self,data):
         #max is half the screen so 255 / 255 * 540 = 540
@@ -22,8 +23,11 @@ class Bar:
         self.rect.height = height 
 
     def draw(self,screen):
- 
-        pygame.draw.rect(screen,self.color,self.rect)
+        temp_surface = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
+        # Draw the bar with transparency
+        pygame.draw.rect(temp_surface, self.color, (0, 0, self.rect.width, self.rect.height))
+        # Blit to main screen at the right position
+        screen.blit(temp_surface, self.rect)
 
 class BarGroup:
     def __init__(self,amount:int,x:int,width:int,barwidth:int):
@@ -46,11 +50,16 @@ class BarGroup:
         for i in range(len(self.bars)):
             self.bars[i].draw(screen)
 
+def draw_rect(rect,screen):
+    pygame.draw.rect(surface=screen,color=(255,255,255),rect=rect)
+
 class Window():
     def __init__(self,audio_path):
-        self.screen = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT),pygame.HIDDEN)
+        self.screen = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT),pygame.SRCALPHA,pygame.HIDDEN)
         self.audio_path = audio_path
         self.audio_data = audio_extractor.AudioDataSet(audio_path)
+        self.frogboard = frogboard.Frogger_Board()
+        self.frogboard.divider_thickness = 2
 
     def run(self):
         pygame.init()
@@ -61,7 +70,8 @@ class Window():
         #totalframes is the number we iterate on to create each frame
         totalframes = self.audio_data.get_total_frames()
         frame_queue = queue.Queue(maxsize=50)
-        bargroups = []   
+        bargroups = []  
+        car_cooldown = [0,0,0,0,0,0,0,0,0,0]
         saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,export_video.get_next_filename()))
         saving_thread.start()
         for i in range(0,10):
@@ -72,22 +82,33 @@ class Window():
             #gives all the bars their unique spacing
             bargroups.append(BarGroup(amount=4,x = x,width=width,barwidth=int(width/4)))
         for frame in range(totalframes):
-            data = self.audio_data.get_visual_ranges(frame_index=frame,direction="left")
-            data2 = self.audio_data.get_visual_ranges(frame_index=frame,direction="right")
-            print(f"Frame{framecount}:")
-            print(f"left:{data}")
-            print(f"right:{data2}")
+            self.screen.fill((0,0,0))
+            data = self.audio_data.get_visual_ranges(frame_index=frame)
+            for i in range(len(data)):
+                if car_cooldown[i] == 0:
+                    if data[i] > 250:
+                        self.frogboard.generate_car(i)
+                        car_cooldown[i] = 30
+                else:
+                    car_cooldown[i] -= 1
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     return 0
             #updates everything
+            self.frogboard.update()
+            cars = self.frogboard.get_all_car_rects()
             for i in range(len(bargroups)):
                 bargroups[i].update(data[i])
             #draws everything
             for i in range(len(bargroups)):
                 bargroups[i].draw(self.screen)
-            pygame.display.flip()
+            for car in cars:
+                try:
+                    draw_rect(car,self.screen)
+                except Exception as e:
+                    pass
+            pygame.display.update()
             #saves screen to folder
             frame_queue.put(self.screen.copy())
             framecount += 1
@@ -106,7 +127,7 @@ def save_frame_temp(queue,output_path):
             '-s', f"{WIN_WIDTH}x{WIN_HEIGHT}",
             '-r', "60",
             '-i', 'pipe:',
-            "-i", "./Test assets/DeepDive.ogg",          # Path to your audio file (handle spaces with quotes or as a list element)
+            "-i", "./Test assets/cat.mp3",          # Path to your audio file (handle spaces with quotes or as a list element)
             '-c:v', 'libx264',
             '-preset', 'fast',
             '-crf', '23',

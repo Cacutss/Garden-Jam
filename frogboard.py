@@ -84,7 +84,7 @@ class Frogger_Lane():
             entry.update()
         for entry in self.frog:
             entry.update()
-        for i in range (len(self.cars),-1, -1): #looping in reverse because that's a safer approach when deleting list entries.
+        for i in range (len(self.cars)-1,-1, -1): #looping in reverse because that's a safer approach when deleting list entries.
             if abs(self.cars[i].x) > SCREEN_WIDTH + 1000: #dumb but effective way to detect if a car is still on screen
                 self.cars.pop(i)
 
@@ -95,10 +95,10 @@ class Frogger_Board():
         self.__lane_count = LANE_COUNT
         self.lanes = []
 
-        self.__initspeed = 30
+        self.__initspeed = 7
 
+        self.divider_thickness = 2
         self.__lanesize = self.calc_lane_height()
-        self.__divider_thickness = DIVIDER_THICKNESS
 
         self.__init_lanes()
 
@@ -109,12 +109,12 @@ class Frogger_Board():
     def get_all_car_rects(self):
         all_car_rects = []
         for entry in self.lanes:
-            all_car_rects.extend(entry.get_car_rects())
+            for car in entry.cars:
+                all_car_rects.append(car.rect)
         return all_car_rects
 
-
     def calc_lane_height(self):
-        sum_of_dividers = self.__divider_thickness*(self.__lane_count-1)
+        sum_of_dividers = self.divider_thickness*(self.__lane_count-1)
         sum_of_lanes = SCREEN_HEIGHT - sum_of_dividers
         return sum_of_lanes/self.__lane_count
 
@@ -130,7 +130,7 @@ class Frogger_Board():
         i = 0
         height = 0
         while i < index:
-            height += self.__divider_thickness + self.__lanesize
+            height += self.divider_thickness + self.__lanesize
             i += 1
         return height
     
@@ -139,6 +139,7 @@ class Frogger_Board():
         if direction == "center": #recursive call to both left and right if it's on center - 2 cars will be generated if that's the case.
             self.generate_car(range_index,"left")
             self.generate_car(range_index,"right")
+            return
 
         # pick a random lane with the correct direction and have that lane use it's own generate_car method
         lanes_with_right_direction = []
