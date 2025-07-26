@@ -20,6 +20,8 @@ to update every frame: frogger_board.update()
 
 to get all the car rects (for rendering): frogger_board.get_all_car_rects()
 
+to get the frog rect: frogger_board.get_frog_rect()
+
 to generate a new car: frogger_board.generate_car(range_index,direction = "center")
 range value is the 0-9 index that measures the frequency range.
 
