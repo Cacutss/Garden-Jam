@@ -1,5 +1,5 @@
 def main():
-    print("Hello from gardenjam!")
+    print("Hello from window!")
 
 
 if __name__ == "__main__":

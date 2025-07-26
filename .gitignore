@@ -2,3 +2,4 @@
 .venv
 *.toml
 uv.lock
+**/__pycache__/
