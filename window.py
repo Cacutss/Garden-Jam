@@ -34,7 +34,7 @@ class BarGroup:
 
     def update(self,data):
         for i in range(len(self.bars)):
-            self.bars[i].update()
+            self.bars[i].update(data)
 
     def draw(self,screen):
         for i in range(len(self.bars)):

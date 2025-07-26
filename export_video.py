@@ -1,6 +1,6 @@
 import subprocess
 import os
-
+import welcome_screen
 
 def ensure_folder_not_empty(folder):
     """
@@ -50,7 +50,7 @@ def get_next_filename(base_name="output", extension="mp4", folder="output"):
         counter += 1
 
 
-def merge_export():
+def merge_export(audio_path):
     #audio_path = audio_path()
     #output_path = 
     output_path = get_next_filename()  # Find a name that does not already exist
@@ -64,7 +64,7 @@ def merge_export():
             "ffmpeg",                                        # The program that turns images and audio into a video.
             "-framerate", "30",                              # Sets the video frame rate to 30 FPS.
             "-i", "./temp_frames/JSAB_finalboss_%05d.png",   # Input pattern for images; %05d matches numbers with leading zeros    
-            "-i", "./audio/Guy runs into wall.wav",          # Path to your audio file (handle spaces with quotes or as a list element)
+            "-i", audio_path,                 # Path to your audio file (handle spaces with quotes or as a list element)
             "-c:v", "libx264",                               # Sets the video codec to libx264 (H.264)
             "-pix_fmt", "yuv420p",                           # Sets pixel format for compatibility
             "-c:a", "aac",                                   # Sets audio codec to AAC
