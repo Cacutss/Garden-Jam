@@ -4,7 +4,7 @@ import subprocess
 import audio_extractor
 import threading
 import queue
-import os
+import export_video
 
 WIN_WIDTH = 1920
 WIN_HEIGHT = 1080
@@ -48,7 +48,7 @@ class BarGroup:
 
 class Window():
     def __init__(self,audio_path):
-        self.screen = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT),pygame.FULLSCREEN)
+        self.screen = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT),pygame.HIDDEN)
         self.audio_path = audio_path
         self.audio_data = audio_extractor.AudioDataSet(audio_path)
 
@@ -62,7 +62,7 @@ class Window():
         totalframes = self.audio_data.get_total_frames()
         frame_queue = queue.Queue(maxsize=50)
         bargroups = []   
-        saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,f"output/output300.mp4"))
+        saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,export_video.get_next_filename()))
         saving_thread.start()
         for i in range(0,10):
             #divides the screen in 10 to fit all 10 bar groups
@@ -148,3 +148,4 @@ def save_frame_temp(queue,output_path):
         if ffmpeg_process and ffmpeg_process.poll() is None: # If still running
             ffmpeg_process.kill() 
         print("Saving thread finished.")
+
