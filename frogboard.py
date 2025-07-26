@@ -119,13 +119,7 @@ class Frogger_Lane():
     def update(self):
         for entry in self.cars:
             entry.update()
-<<<<<<< HEAD
         for i in range (len(self.cars)-1,0, -1): #looping in reverse because that's a safer approach when deleting list entries.
-=======
-        for entry in self.frog:
-            entry.update()
-        for i in range (len(self.cars)-1,-1, -1): #looping in reverse because that's a safer approach when deleting list entries.
->>>>>>> Cacutss
             if abs(self.cars[i].x) > SCREEN_WIDTH + 1000: #dumb but effective way to detect if a car is still on screen
                 self.cars.pop(i)
 
@@ -140,12 +134,8 @@ class Frogger_Board():
 
         self.divider_thickness = 2
         self.__lanesize = self.calc_lane_height()
-<<<<<<< HEAD
         self.move_cooldown = 0
         
-=======
-
->>>>>>> Cacutss
         self.__init_lanes()
 
         self.frog = self.__init_frog()
@@ -273,6 +263,7 @@ class Frogger_Board():
         print("WARNING: Car crash detected - maybe tweak some car generation parameters?")
         return
 
+
     def calc_lane_height(self):
         sum_of_dividers = self.divider_thickness*(self.__lane_count-1)
         sum_of_lanes = SCREEN_HEIGHT - sum_of_dividers
@@ -318,4 +309,3 @@ class Frogger_Board():
 
 
     
-
