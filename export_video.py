@@ -62,9 +62,9 @@ def merge_export():
         # Runs the ffmpeg command as if you typed it in the terminal
         result = subprocess.run([
             "ffmpeg",                                        # The program that turns images and audio into a video.
-            "-framerate", "30",                              # Sets the video frame rate to 30 FPS.
-            "-i", "./temp_frames/JSAB_finalboss_%05d.png",   # Input pattern for images; %05d matches numbers with leading zeros    
-            "-i", "./audio/Guy runs into wall.wav",          # Path to your audio file (handle spaces with quotes or as a list element)
+            "-framerate", "60",                              # Sets the video frame rate to 30 FPS.
+            "-i", "./temp_frames/FG_%08d.bmp",   # Input pattern for images; %05d matches numbers with leading zeros    
+            "-i", "./Test assets/cat.mp3",          # Path to your audio file (handle spaces with quotes or as a list element)
             "-c:v", "libx264",                               # Sets the video codec to libx264 (H.264)
             "-pix_fmt", "yuv420p",                           # Sets pixel format for compatibility
             "-c:a", "aac",                                   # Sets audio codec to AAC

@@ -1,8 +1,9 @@
 import export_video
+import window
 
-
-def main():    
-    export_video.merge_export()
+def main(): 
+    gamewindow = window.Window("Test assets/cat.mp3")
+    gamewindow.run()
 
 
 
