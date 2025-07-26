@@ -2,9 +2,8 @@ import export_video
 import window
 
 def main(): 
-    gamewindow = window.Window("Test assets/cat.mp3")
+    gamewindow = window.Window("Test assets/DeepDive.ogg")
     gamewindow.run()
-    export_video.merge_export()
 
 
 
