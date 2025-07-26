@@ -4,3 +4,4 @@
 uv.lock
 **/__pycache__/
 **/temp_frames/
+**/output/
