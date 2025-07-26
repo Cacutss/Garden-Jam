@@ -1,15 +1,20 @@
 import pygame
 import numpy
-import audio_extractor 
-import os
+import frogboard
+import subprocess
+import audio_extractor
+import threading
+import queue
+import export_video
 
 WIN_WIDTH = 1920
 WIN_HEIGHT = 1080
+ZEROES = "00000000"
 
 class Bar:
     def __init__(self,x:int,y:int,width:int):
         self.rect = pygame.Rect((x,y),(width,0))
-        self.color = (255,255,255)
+        self.color = pygame.Color(255,255,255,30)
 
     def update(self,data):
         #max is half the screen so 255 / 255 * 540 = 540
@@ -18,7 +23,11 @@ class Bar:
         self.rect.height = height 
 
     def draw(self,screen):
-        pygame.draw.rect(screen,self.color,self.rect)
+        temp_surface = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
+        # Draw the bar with transparency
+        pygame.draw.rect(temp_surface, self.color, (0, 0, self.rect.width, self.rect.height))
+        # Blit to main screen at the right position
+        screen.blit(temp_surface, self.rect)
 
 class BarGroup:
     def __init__(self,amount:int,x:int,width:int,barwidth:int):
@@ -41,51 +50,123 @@ class BarGroup:
         for i in range(len(self.bars)):
             self.bars[i].draw(screen)
 
-def create_temp():
+def draw_rect(rect,screen):
+    pygame.draw.rect(surface=screen,color=(255,255,255),rect=rect)
+
+class Window():
+    def __init__(self,audio_path):
+        self.screen = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT),pygame.SRCALPHA,pygame.HIDDEN)
+        self.audio_path = audio_path
+        self.audio_data = audio_extractor.AudioDataSet(audio_path)
+        self.frogboard = frogboard.Frogger_Board()
+        self.frogboard.divider_thickness = 2
+
+    def run(self):
+        pygame.init()
+        #you can change display flags, example : pygame.FULLSCREEN gives you fullscreen duh, there's also filters you can apply here.
+        pygame.display.set_caption("Visualizer")
+        #framecount is the count used to name frames in temp_frames folder
+        framecount = 1
+        #totalframes is the number we iterate on to create each frame
+        totalframes = self.audio_data.get_total_frames()
+        frame_queue = queue.Queue(maxsize=50)
+        bargroups = []  
+        car_cooldown = [0,0,0,0,0,0,0,0,0,0]
+        saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,export_video.get_next_filename()))
+        saving_thread.start()
+        for i in range(0,10):
+            #divides the screen in 10 to fit all 10 bar groups
+            x = int(WIN_WIDTH *(i/10))
+            #gives all the bargroups the same width
+            width = int(WIN_WIDTH/10)
+            #gives all the bars their unique spacing
+            bargroups.append(BarGroup(amount=4,x = x,width=width,barwidth=int(width/4)))
+        for frame in range(totalframes):
+            self.screen.fill((0,0,0))
+            data = self.audio_data.get_visual_ranges(frame_index=frame)
+            for i in range(len(data)):
+                if car_cooldown[i] == 0:
+                    if data[i] > 250:
+                        self.frogboard.generate_car(i)
+                        car_cooldown[i] = 30
+                else:
+                    car_cooldown[i] -= 1
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    return 0
+            #updates everything
+            self.frogboard.update()
+            cars = self.frogboard.get_all_car_rects()
+            for i in range(len(bargroups)):
+                bargroups[i].update(data[i])
+            #draws everything
+            for i in range(len(bargroups)):
+                bargroups[i].draw(self.screen)
+            for car in cars:
+                try:
+                    draw_rect(car,self.screen)
+                except Exception as e:
+                    pass
+            pygame.display.update()
+            #saves screen to folder
+            frame_queue.put(self.screen.copy())
+            framecount += 1
+        frame_queue.put(None)
+        frame_queue.join()
+        saving_thread.join()
+        pygame.quit()
+
+def save_frame_temp(queue,output_path):
+    print("starting saving thread")
+    ffmpeg_cmd = [
+            'ffmpeg',
+            '-y',
+            '-f', 'rawvideo',
+            '-pix_fmt', 'bgra',  # Pygame often gives BGRA byte order with alpha
+            '-s', f"{WIN_WIDTH}x{WIN_HEIGHT}",
+            '-r', "60",
+            '-i', 'pipe:',
+            "-i", "./Test assets/cat.mp3",          # Path to your audio file (handle spaces with quotes or as a list element)
+            '-c:v', 'libx264',
+            '-preset', 'fast',
+            '-crf', '23',
+            '-c:a', 'aac',
+            output_path
+    ]
+
+    ffmpeg_process = None
     try:
-        rootpath = os.getcwd()
-        temp = os.path.join(rootpath,"temp_frames")
-        os.mkdir(temp)
+        ffmpeg_process = subprocess.Popen(ffmpeg_cmd,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
+        while True:
+            #queue.get() gets a frame or waits if there is no frame, queue is basically a list that when you use put() you put into the queue
+            frame = queue.get()
+            #we send none once it's finished
+            if frame is None:
+                queue.task_done()
+                break
+
+            raw_data = pygame.image.tostring(frame,'BGRA')
+
+            ffmpeg_process.stdin.write(raw_data)
+            
+            queue.task_done()
+        ffmpeg_process.stdin.close()
+        ffmpeg_process.wait()
+        print(f"saving finished: ffmpeg process exited with {ffmpeg_process.returncode}")
+
+        if ffmpeg_process.returncode != 0:
+            print("Ffmpeg error output:")
+            print(ffmpeg_process.stderr.read().decode())
+    except FileNotFoundError:
+        print("Error: ffmpeg not found. Please ensure ffmpeg is installed and in your PATH")
     except Exception as e:
-        pass
+        print(f"Error in saving thread:{e}")
+    finally:
+        if ffmpeg_process and ffmpeg_process.poll() is None: # If process is still running
+            ffmpeg_process.terminate()
+            ffmpeg_process.wait(timeout=5) # Wait a bit
+        if ffmpeg_process and ffmpeg_process.poll() is None: # If still running
+            ffmpeg_process.kill() 
+        print("Saving thread finished.")
 
-def create_window():
-    audio_path = "Test assets/cat.mp3"
-    audioExtractor = audio_extractor.AudioDataSet(audio_path)
-    audioExtractor = audio_extractor.AudioDataSet("Test assets/cat.mp3")
-    pygame.init()
-    #you can change display flags, example : pygame.FULLSCREEN gives you fullscreen duh, there's also filters you can apply here.
-    screen = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT),pygame.FULLSCREEN)
-    pygame.display.set_caption("Visualizer")
-    framecount = 0
-    totalframes = audioExtractor.get_total_frames()
-    bargroups = []
-    print(totalframes)
-    for i in range(0,10):
-        #divides the screen in 10 to fit all 10 bar groups
-        x = int(WIN_WIDTH *(i/10))
-        #gives all the bargroups the same width
-        width = int(WIN_WIDTH/10) 
-        bargroups.append(BarGroup(amount=4,x = x,width=width,barwidth=int(width/4)))
-    for frame in range(totalframes):
-        data = audioExtractor.get_visual_ranges(frame_index=frame)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-        screen.fill((0,0,0))
-        #updates everything
-        for i in range(len(bargroups)):
-            bargroups[i].update(data[i])
-        #draws everything
-        for i in range(len(bargroups)):
-            bargroups[i].draw(screen)
-        pygame.display.flip()
-        #saves screen to folder
-        pygame.image.save(screen,f"temp_frames/screen{framecount}.png")
-        framecount += 1
-        #framerate should be number of frames / audio duration in seconds?
-
-    pygame.quit()
-
-create_temp()    
-create_window()
