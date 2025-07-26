@@ -1,5 +1,6 @@
 import pygame
 import numpy
+import subprocess
 import audio_extractor
 import threading
 import queue
@@ -21,6 +22,7 @@ class Bar:
         self.rect.height = height 
 
     def draw(self,screen):
+ 
         pygame.draw.rect(screen,self.color,self.rect)
 
 class BarGroup:
@@ -60,7 +62,7 @@ class Window():
         totalframes = self.audio_data.get_total_frames()
         frame_queue = queue.Queue(maxsize=50)
         bargroups = []   
-        saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,))
+        saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,f"output/output300.mp4"))
         saving_thread.start()
         for i in range(0,10):
             #divides the screen in 10 to fit all 10 bar groups
@@ -70,8 +72,11 @@ class Window():
             #gives all the bars their unique spacing
             bargroups.append(BarGroup(amount=4,x = x,width=width,barwidth=int(width/4)))
         for frame in range(totalframes):
-            print(f"{framecount}/{totalframes}")
-            data = self.audio_data.get_visual_ranges(frame_index=frame)
+            data = self.audio_data.get_visual_ranges(frame_index=frame,direction="left")
+            data2 = self.audio_data.get_visual_ranges(frame_index=frame,direction="right")
+            print(f"Frame{framecount}:")
+            print(f"left:{data}")
+            print(f"right:{data2}")
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -82,7 +87,7 @@ class Window():
             #draws everything
             for i in range(len(bargroups)):
                 bargroups[i].draw(self.screen)
-            pygame.display.update()
+            pygame.display.flip()
             #saves screen to folder
             frame_queue.put(self.screen.copy())
             framecount += 1
@@ -90,29 +95,56 @@ class Window():
         frame_queue.join()
         saving_thread.join()
         pygame.quit()
- 
-def create_temp():
-    try:
-        rootpath = os.getcwd()
-        temp = os.path.join(rootpath,"temp_frames")
-        os.mkdir(temp)
-    except Exception as e:
-        pass
 
-def save_frame_temp(queue):
-    i = 1
-    while True:
-        try:
+def save_frame_temp(queue,output_path):
+    print("starting saving thread")
+    ffmpeg_cmd = [
+            'ffmpeg',
+            '-y',
+            '-f', 'rawvideo',
+            '-pix_fmt', 'bgra',  # Pygame often gives BGRA byte order with alpha
+            '-s', f"{WIN_WIDTH}x{WIN_HEIGHT}",
+            '-r', "60",
+            '-i', 'pipe:',
+            "-i", "./Test assets/DeepDive.ogg",          # Path to your audio file (handle spaces with quotes or as a list element)
+            '-c:v', 'libx264',
+            '-preset', 'fast',
+            '-crf', '23',
+            '-c:a', 'aac',
+            output_path
+    ]
+
+    ffmpeg_process = None
+    try:
+        ffmpeg_process = subprocess.Popen(ffmpeg_cmd,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
+        while True:
             #queue.get() gets a frame or waits if there is no frame, queue is basically a list that when you use put() you put into the queue
             frame = queue.get()
             #we send none once it's finished
             if frame is None:
                 queue.task_done()
                 break
-            pygame.image.save(frame,f"temp_frames/FG_{i:08d}.bmp")
-            i+= 1
+
+            raw_data = pygame.image.tostring(frame,'BGRA')
+
+            ffmpeg_process.stdin.write(raw_data)
+            
             queue.task_done()
-        except Exception as e:
-            print(f"Error in saving thread:{e}")
-            break
-    
+        ffmpeg_process.stdin.close()
+        ffmpeg_process.wait()
+        print(f"saving finished: ffmpeg process exited with {ffmpeg_process.returncode}")
+
+        if ffmpeg_process.returncode != 0:
+            print("Ffmpeg error output:")
+            print(ffmpeg_process.stderr.read().decode())
+    except FileNotFoundError:
+        print("Error: ffmpeg not found. Please ensure ffmpeg is installed and in your PATH")
+    except Exception as e:
+        print(f"Error in saving thread:{e}")
+    finally:
+        if ffmpeg_process and ffmpeg_process.poll() is None: # If process is still running
+            ffmpeg_process.terminate()
+            ffmpeg_process.wait(timeout=5) # Wait a bit
+        if ffmpeg_process and ffmpeg_process.poll() is None: # If still running
+            ffmpeg_process.kill() 
+        print("Saving thread finished.")
