@@ -1,6 +1,10 @@
-def main():
-    print("Hello from gardenjam!")
+import export_video
+
+
+def main():    
+    export_video.merge_export()
+
 
 
 if __name__ == "__main__":
-    main()
+    main()  # Only runs main() if this script is run directly
