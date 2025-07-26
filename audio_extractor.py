@@ -31,7 +31,7 @@ NUM_BIN_RANGES = 10 #these are decided by the way the visualizer is designed
 
 NUM_BINS = 1024 #these are then divided into ranges based on an exponential scale that represents how frequencies work.
 
-DEBUG = False
+DEBUG = True
 
 class AudioDataSet():
 
@@ -101,7 +101,7 @@ class AudioDataSet():
             n = self.__right_magnitude
 
         if frame_index >= n.shape[1]:
-            raise IndexError(f"Frame {frame_index} out of range. Max frame: {n.shape[1] - 1}")
+            raise IndexError(f"ERROR: Frame {frame_index} out of range. Max frame: {n.shape[1] - 1}")
         
         return n[:, frame_index]
     
@@ -174,7 +174,7 @@ class AudioDataSet():
     
     def get_visual_ranges(self, frame_index, direction="center"):
         #and this is the one that's posing as the master function but it acually just returns a value.
-        #much better to generate everything at the init stage than to calculate it every time.
+        #much better performance wise to generate everything at the init stage than to calculate it every time.
         if direction == "center":
             return self.__processed_center[frame_index]
         elif direction == "left":
@@ -182,7 +182,7 @@ class AudioDataSet():
         elif direction == "right":
             return self.__processed_right[frame_index]
         else:
-            raise ValueError(f"Invalid direction: {direction}")
+            raise ValueError(f"ERROR: Invalid direction: {direction}")
 
 
         
