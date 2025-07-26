@@ -54,12 +54,13 @@ def create_window():
     audioExtractor = audio_extractor.AudioDataSet(audio_path)
     audioExtractor = audio_extractor.AudioDataSet("Test assets/cat.mp3")
     pygame.init()
+    #you can change display flags, example : pygame.FULLSCREEN gives you fullscreen duh, there's also filters you can apply here.
     screen = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT),pygame.FULLSCREEN)
     pygame.display.set_caption("Visualizer")
-    clock = pygame.time.Clock()
     framecount = 0
     totalframes = audioExtractor.get_total_frames()
     bargroups = []
+    print(totalframes)
     for i in range(0,10):
         #divides the screen in 10 to fit all 10 bar groups
         x = int(WIN_WIDTH *(i/10))
@@ -81,7 +82,6 @@ def create_window():
         pygame.display.flip()
         #saves screen to folder
         pygame.image.save(screen,f"temp_frames/screen{framecount}.png")
-        print(data)
         framecount += 1
         #framerate should be number of frames / audio duration in seconds?
 
