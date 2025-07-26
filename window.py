@@ -50,12 +50,9 @@ def create_temp():
         pass
 
 def create_window():
-<<<<<<< HEAD
     audio_path = "Test assets/cat.mp3"
     audioExtractor = audio_extractor.AudioDataSet(audio_path)
-=======
     audioExtractor = audio_extractor.AudioDataSet("Test assets/cat.mp3")
->>>>>>> 961090f3e441bbdad16be8803f8de095299bfc67
     pygame.init()
     screen = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT),pygame.FULLSCREEN)
     pygame.display.set_caption("Visualizer")
