@@ -8,7 +8,7 @@ import queue
 import export_video
 from constants import *
 
-AUDIO_FILE="./Test assets/DeepDive.ogg"
+AUDIO_FILE="./Test assets/beeps.wav"
 
 class Bar:
     def __init__(self,x:int,y:int,width:int):
@@ -87,10 +87,9 @@ class Window():
         #you can change display flags, example : pygame.FULLSCREEN gives you fullscreen duh, there's also filters you can apply here.
         pygame.display.set_caption("Visualizer")
         #framecount is the count used to name frames in temp_frames folder
-        framecount = 1
         #totalframes is the number we iterate on to create each frame
         totalframes = self.audio_data.get_total_frames()
-        frame_queue = queue.Queue(maxsize=50)
+        frame_queue = queue.Queue(maxsize=10)
         saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,export_video.get_next_filename()))
         saving_thread.start()
         for i in range(0,10):
@@ -107,7 +106,6 @@ class Window():
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                    frame_queue.put(None)
                     return 0
             #updates everything
             self.update(data)
@@ -116,7 +114,6 @@ class Window():
             pygame.display.update()
             #saves screen to folder
             frame_queue.put(self.screen.copy())
-            framecount += 1
         pygame.quit()
         frame_queue.put(None)
         frame_queue.join()
@@ -134,12 +131,12 @@ def save_frame_temp(queue,output_path):
             '-i', 'pipe:',
             "-i", AUDIO_FILE,          # Path to your audio file (handle spaces with quotes or as a list element)
             '-c:v', 'libx264',
-            '-preset', 'fast',
+            '-preset', 'ultrafast',
             '-crf', '23',
             '-c:a', 'aac',
             output_path
     ]
-
+    count = 1
     ffmpeg_process = None
     try:
         ffmpeg_process = subprocess.Popen(ffmpeg_cmd,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
@@ -152,10 +149,25 @@ def save_frame_temp(queue,output_path):
                 break
 
             raw_data = pygame.image.tostring(frame,'BGRA')
+           
+            try:
+                ffmpeg_process.stdin.write(raw_data)
+            except Exception as e:
+                print("I AM AN EXCEPTION, WRITE FAILED")
+                print(f"Error writing frame to ffmpeg at frame {count}: {e}")
+                # Print ffmpeg's status and stderr right here!
+                try:
+                    ffmpeg_process.stdin.close()
+                except Exception:
+                    pass
+                ffmpeg_process.wait()
+                print(f"ffmpeg returncode: {ffmpeg_process.returncode}")
+                print("Ffmpeg error output:")
+                print(ffmpeg_process.stderr.read().decode())
+                break
 
-            ffmpeg_process.stdin.write(raw_data)
-            
             queue.task_done()
+            count+=1
         ffmpeg_process.stdin.close()
         ffmpeg_process.wait()
         print(f"saving finished: ffmpeg process exited with {ffmpeg_process.returncode}")
