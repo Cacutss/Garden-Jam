@@ -6,7 +6,7 @@ import subprocess
 import audio_extractor
 import threading
 import queue
-
+import export_video
 from constants import *
 
 def get_next_filename(base_name="output", extension="mp4", folder="output"):
@@ -26,6 +26,35 @@ def get_next_filename(base_name="output", extension="mp4", folder="output"):
             return file_path
         counter += 1
 
+class RGB_Cycle:
+
+    def __init__(self,color): #rgb are ints that represent color, calc is whether that value should increase or not.
+        r,g,b = color
+        self.color = [r,g,b]
+        self.step = 1
+        self.phase = 0  # 0-5 for the 6 transitions - R, Y, G, C, B, P
+        
+
+    def cycle(self): #increases/decreases color values based on the correct transition
+        if self.color == [255,0,0]: self.phase = 0
+        if self.color == [255,255,0]: self.phase = 1
+        if self.color == [0,255,0]: self.phase = 2
+        if self.color == [0,255,255]: self.phase = 3
+        if self.color == [0,0,255]: self.phase = 4
+        if self.color == [255,0,255]: self.phase = 5
+
+        if self.phase == 0: self.color[1] += 1
+        if self.phase == 1: self.color[0] -= 1
+        if self.phase == 2: self.color[2] += 1
+        if self.phase == 3: self.color[1] -= 1
+        if self.phase == 4: self.color[0] += 1
+        if self.phase == 5: self.color[2] -= 1
+
+
+    def get_color(self):
+        return self.color[0],self.color[1],self.color[2]
+
+
 class Bar:
     def __init__(self,x:int,y:int,width:int):
         self.rect = pygame.Rect((x,y),(width,0))
@@ -33,7 +62,7 @@ class Bar:
 
     def update(self,data):
         #max is half the screen so 255 / 255 * 540 = 540
-        height = (data / 255) * (WIN_HEIGHT/2)
+        height = (data / 255) * BAR_MAX_HEIGHT
         self.rect.y = WIN_HEIGHT - height
         self.rect.height = height 
 
@@ -65,6 +94,10 @@ class BarGroup:
         for i in range(len(self.bars)):
             self.bars[i].draw(screen)
 
+class CarRender:
+    def __init__(self,rect,color):
+        self.rect = rect
+
 def draw_rect(rect,screen,color):
     pygame.draw.rect(surface=screen,color=color,rect=rect)
 
@@ -76,18 +109,41 @@ class Window():
         self.bargroups = []  
         self.car_cooldown = [0,0,0,0,0,0,0,0,0,0]
         self.frogboard = frogboard.Frogger_Board()
+        self.rgb = RGB_Cycle(CAR_COLOR)
 
-    def update(self,data):
-        self.frogboard.update()
-        for i in range(len(data)):
+    def determine_car_generation(self,frame_index):
+        left = self.audio_data.get_visual_ranges(frame_index=frame_index,direction="left")
+        center = self.audio_data.get_visual_ranges(frame_index=frame_index,direction="center")
+        right = self.audio_data.get_visual_ranges(frame_index=frame_index,direction="right")
+        determined_directions = []
+
+        def determine_direction(l,r,c):
+            if l - 100 > r:
+                return "left"
+            if r - 100 > l:
+                return "right"
+            return "center"
+        
+        for i in range (len(left)):
+            determined_directions.append(determine_direction(left[i],center[i],right[i]))
+
+        for i in range (len(left)):
             if self.car_cooldown[i] == 0:
-                if data[i] > 250:
-                    self.frogboard.generate_car(i)
-                    self.car_cooldown[i] = 30
+                if self.audio_data.get_visual_ranges(frame_index=frame_index,direction=determined_directions[i])[i] > 250:
+                    self.frogboard.generate_car(i,determined_directions[i])
+                    self.car_cooldown[i] = 50
             else:
                 self.car_cooldown[i] -= 1
+
+    def update(self,data,frame):
+        self.frogboard.update()
+        self.rgb.cycle()
+        self.determine_car_generation(frame)
         for i in range(len(self.bargroups)):
             self.bargroups[i].update(data[i])
+
+    def draw_car(self,car,screen,color):
+        draw_rect(car,screen,color)
 
     def draw(self):
         for i in range(len(self.bargroups)):
@@ -95,7 +151,7 @@ class Window():
         cars = self.frogboard.get_all_car_rects()
         frog = self.frogboard.get_frog_rect()
         for car in cars:
-            draw_rect(car,self.screen,CAR_COLOR_LEFT)
+            self.draw_car(car,self.screen,self.rgb.get_color())
         draw_rect(frog,self.screen,FROG_COLOR)
 
     def run(self):
@@ -122,7 +178,7 @@ class Window():
         for frame in range(totalframes):
             print(f"{frame}/{totalframes}")
             self.screen.fill((0,0,0))
-            data = self.audio_data.get_visual_ranges(frame_index=frame)
+            data = self.audio_data.get_visual_ranges(frame_index=frame,direction="center")
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -131,7 +187,7 @@ class Window():
                     saving_thread.join()
                     return 0
             #updates everything
-            self.update(data)
+            self.update(data,frame)
             #draws everything
             self.draw()
             pygame.display.update()

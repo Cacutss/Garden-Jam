@@ -90,7 +90,7 @@ class AudioDataSet():
         #Tempo initialization
         self.tempo = tempo
         if self.tempo == None:
-            print("No tempo detected, computing BPM... this crashes right now, on it :)")
+            print("No tempo detected, computing BPM...")
             self.__raw_tempo = librosa.beat.beat_track(
             y=self.__left_channel, 
             sr=self.__sample_rate,

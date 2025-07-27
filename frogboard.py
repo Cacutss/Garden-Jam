@@ -192,16 +192,17 @@ class Frogger_Board():
             return False
         elif self.move_cooldown != 0: #at this point, most of the cooldown is still in place - only move when you REALLY have to
 
-            def indentify_frog_lane():
+            def identify_frog_lane():
                 for i in range(0, len(self.lanes)):
                     if self.frog.rect.colliderect(self.lanes[i].rect):
                         return i
+                raise Exception (f"frog went out of bounds, frog rect is {self.frog.rect}")
                     
             x_to_check = self.frog.x + (self.frog.w/2)
                     
             def check_if_car_is_too_close():
                 nonlocal x_to_check
-                lane = self.lanes[indentify_frog_lane()]
+                lane = self.lanes[identify_frog_lane()]
                 for car_rect in lane.cars:
                     distance_to_check = x_to_check - (car_rect.x + (car_rect.w/2))
                     if abs(distance_to_check) < (self.frog.w*3): #arbitrary distance check passes
@@ -373,3 +374,15 @@ class Frogger_Board():
             
         lane_to_generate = random.choice(lanes_to_choose_from)
         lane_to_generate.generate_car(range_index)
+
+
+
+DEBUG = False
+
+if DEBUG:
+    n = Frogger_Board()
+    n.frog.x = 872
+    n.frog.y = 504
+    for i in range (5000000):
+        print (f"frame {i}: frog rect = {n.frog.rect}")
+        n.update()
