@@ -11,10 +11,6 @@ def main():
     gamewindow = window.Window(audio_path)
     gamewindow.run()
     # create_window(audio_path)   # Launch visualization as needed
-<<<<<<< HEAD
-
-=======
->>>>>>> 1c4c55512d59efce3fefc5c270c2e1e4fea5349c
 
 if __name__ == "__main__":
     main()

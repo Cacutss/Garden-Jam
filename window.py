@@ -187,7 +187,4 @@ def save_frame_temp(queue,output_path,audio_path):
         if ffmpeg_process and ffmpeg_process.poll() is None: # If still running
             ffmpeg_process.kill() 
         print("Saving thread finished.")
-<<<<<<< HEAD
-=======
         
->>>>>>> 1c4c55512d59efce3fefc5c270c2e1e4fea5349c
