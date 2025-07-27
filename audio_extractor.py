@@ -10,7 +10,7 @@ FILE_PATH_DEBUG = Path('Test assets')/'beeps.wav'
 TARGET_FPS = 60
 NUM_BIN_RANGES = 10 #these are decided by the way the visualizer is designed
 NUM_BINS = 1024 #these are then divided into ranges based on an exponential scale that represents how frequencies work.
-DEBUG = False #if at any point this says true, feel free to turn it back to false. it'll save you some pain :)
+DEBUG = False
 
 
 """
@@ -89,13 +89,14 @@ class AudioDataSet():
 
         #Tempo initialization
         self.tempo = tempo
-        if self.tempo == None and 1 == 2:
-            print("No tempo detected, computing BPM...")
-            self.tempo, _ = librosa.beat.beat_track(
+        if self.tempo == None:
+            print("No tempo detected, computing BPM... this crashes right now, on it :)")
+            self.__raw_tempo = librosa.beat.beat_track(
             y=self.__left_channel, 
             sr=self.__sample_rate,
             hop_length=int(self.__sample_rate / TARGET_FPS)  # Match your existing hop_length
-            )
+            )[0]
+            self.tempo = float(self.__raw_tempo)
             print(f"BPM detected: {self.tempo:.1f}")
         
         if total_frames > 50000:

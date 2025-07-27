@@ -72,10 +72,15 @@ class Frogger_Car():
         min_length = CAR_WIDTH_BASE
         
         self.speed = speed
-        self.x = x
+        
         self.y = y
         self.w = (int(range_index*3)) + min_length #converting the 0-255 value to a more reasonable value visually, this is fully arbitrary
         self.h = CAR_HEIGHT #arbitrary, can change later.
+
+        if x == "left":
+            self.x = 0
+        elif x == "right":
+            self.x = SCREEN_WIDTH - self.w
 
         self.rect = pygame.Rect(self.x, self.y,self.w,self.h)
 
@@ -105,9 +110,9 @@ class Frogger_Lane():
         self.cars = [] # init
 
         if self.direction == "left": #car travels to the left
-            self.car_start_x = SCREEN_WIDTH
+            self.car_start_x = "right"
         if self.direction == "right": #car travels to the right
-            self.car_start_x = 0
+            self.car_start_x = "left"
 
     def generate_car(self,range_index):
         self.cars.append(Frogger_Car(range_index,self.speed,self.car_start_x,self.y))
