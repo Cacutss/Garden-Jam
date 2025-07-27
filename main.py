@@ -1,4 +1,3 @@
-import export_video
 import window
 from welcome_screen import show_instruction_screen
 
