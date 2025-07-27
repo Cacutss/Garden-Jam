@@ -147,7 +147,6 @@ class Frogger_Board():
         gap_between_lanes = self.__lanesize + self.divider_thickness
         return Froggy(x,y,size,gap_between_lanes)
     
-
     def get_all_car_rects(self):
         all_car_rects = []
         for entry in self.lanes:
@@ -328,3 +327,4 @@ class Frogger_Board():
 
 
     
+
