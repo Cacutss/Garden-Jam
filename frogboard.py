@@ -41,8 +41,8 @@ class Froggy(): #self playing player
 
         self.rect = pygame.Rect(self.x,self.y,self.w,self.h)
 
-        self.increment_move_x = size * 1.25 #quarter of size is the margin
-        self.increment_move_y = gap_between_lanes #this needs to be calculated in the board class like most calculations.
+        self.increment_move_x = gap_between_lanes #arbitrary, can be anything
+        self.increment_move_y = gap_between_lanes #has to be this no matter what. this needs to be calculated in the board class like most calculations.
 
     def change_position(self,direction): #verbose, but readable - the way i like it :p
         if direction == "left":
@@ -58,6 +58,9 @@ class Froggy(): #self playing player
             self.y += self.increment_move_y
             self.y_weight +=1
 
+    def weight_too_light_to_care(self):
+        return (abs(self.x_weight) < 5) or (abs(self.y_weight) < 5) #no need to gravitate towards center yet.
+
 
     def update(self):
         self.rect = pygame.Rect(self.x,self.y,self.w,self.h)
@@ -66,7 +69,7 @@ class Froggy(): #self playing player
 class Frogger_Car():
 
     def __init__(self, range_index, speed,x,y):
-        min_length = 50
+        min_length = CAR_WIDTH_BASE
         
         self.speed = speed
         self.x = x
@@ -129,7 +132,7 @@ class Frogger_Board():
         self.__lane_count = LANE_COUNT
         self.lanes = []
 
-        self.__initspeed = 7
+        self.__initspeed = CAR_SPEED
 
         self.divider_thickness = 2
         self.__lanesize = self.calc_lane_height()
@@ -139,9 +142,18 @@ class Frogger_Board():
 
         self.frog = self.__init_frog()
 
+    def __init_lanes(self):
+        for i in range (0,self.__lane_count):
+            direction = "left"
+            if i%2 == 1: #alternate left and right
+                direction = "right"
+            self.lanes.append(Frogger_Lane(direction,self.__initspeed,self.__get_lane_y_value(i),self.__lanesize)) 
+            #for now it's one speed fits all. i can absolutely change this later.
+
     def __init_frog(self):
         x = (SCREEN_WIDTH/2) - (FROG_SIZE/2)
-        y = (SCREEN_HEIGHT/2) - (FROG_SIZE/2)
+        correct_lane = self.lanes[int(LANE_COUNT/2)]
+        y = correct_lane.y + (correct_lane.h/2) - (self.calc_lane_height()/2) #- (FROG_SIZE/2)
         size = FROG_SIZE
         gap_between_lanes = self.__lanesize + self.divider_thickness
         return Froggy(x,y,size,gap_between_lanes)
@@ -170,35 +182,56 @@ class Frogger_Board():
     
     def frog_should_move(self):
 
-        if self.move_cooldown != 0:
+        #emergency movement (car too close) goes here:
+        if self.move_cooldown >= 32:
             return False
-        if random.randint(1, 15) == 1: #wanders around even if it does not need to
-            return True
+        elif self.move_cooldown != 0: #at this point, most of the cooldown is still in place - only move when you REALLY have to
 
-        def indentify_frog_lane():
-            for i in range(0, len(self.lanes)):
-                if self.frog.rect.colliderect(self.lanes[i].rect):
-                    return i
-                
-        def check_if_car_is_too_close():
-            lane = self.lanes[indentify_frog_lane()]
+            def indentify_frog_lane():
+                for i in range(0, len(self.lanes)):
+                    if self.frog.rect.colliderect(self.lanes[i].rect):
+                        return i
+                    
             x_to_check = self.frog.x + (self.frog.w/2)
-            for car_rect in lane.cars:
-                distance_to_check = x_to_check - (car_rect.x + (car_rect.w/2))
-                if abs(distance_to_check) < (self.frog.w + 5): #distance check passes
-                    if lane.direction == "left" and distance_to_check <= 0:
-                        return True
-                    if lane.direction == "right" and distance_to_check >= 0:
-                        return True
-            return False
-        
-        return check_if_car_is_too_close()
+                    
+            def check_if_car_is_too_close():
+                nonlocal x_to_check
+                lane = self.lanes[indentify_frog_lane()]
+                for car_rect in lane.cars:
+                    distance_to_check = x_to_check - (car_rect.x + (car_rect.w/2))
+                    if abs(distance_to_check) < (self.frog.w*3): #arbitrary distance check passes
+                        if lane.direction == "left" and distance_to_check <= 0:
+                            return True
+                        if lane.direction == "right" and distance_to_check >= 0:
+                            return True
+                return False
             
+            
+            def check_if_too_close_to_edge():
+                nonlocal x_to_check
+                edge_margin = FROG_SIZE*10 
+                if (x_to_check < edge_margin) or (x_to_check > SCREEN_WIDTH - edge_margin):
+                    return True
+                y_to_check = self.frog.x + (self.frog.h/2)
+                if (y_to_check < edge_margin) or (y_to_check > SCREEN_HEIGHT - edge_margin):
+                    return True
+                
+            return check_if_car_is_too_close() or check_if_too_close_to_edge()
+            
+        elif random.randint(1, 50) == 1: #wanders around even if it does not "want" to. just for randomness sake 
+            return True
         
-
-
+        elif random.randint(1, 10) and self.frog.weight_too_light_to_care: #wanders around when it "wants" to
+            return True
+    
+        return False
+        
+        
+            
     
     def find_where_to_move_and_move_there(self): #oh boy this is some code of all time
+
+        edge_margin = FROG_SIZE*2 #this is not the same as the one in frog_should_move(self). that one is a "suggestion" to move. this one is mandatory.
 
         def move_checker(rect,direction):
             if direction == "left":
@@ -212,11 +245,18 @@ class Frogger_Board():
             return rect
         
         def frog_can_move_there(direction):
+            nonlocal edge_margin
             tester_rect = move_checker(self.frog.rect.copy(),direction)
+            if direction == "up" or direction == "down":
 
-            if tester_rect.x < (FROG_SIZE*2) or tester_rect.x > SCREEN_WIDTH -(FROG_SIZE*2): #corner detection. not exact and that's ok. we need some breathing room.
+                #arbitrary safety check to prevent any car crashes from adjacent lanes - TODO: check only one direction?
+                margin = self.frog.increment_move_x + FROG_SIZE
+                tester_rect.x -= margin 
+                tester_rect.w += margin*2
+
+            if tester_rect.x < (edge_margin) or tester_rect.x > SCREEN_WIDTH -(edge_margin): #corner detection. not exact and that's ok. we need some breathing room.
                 return False
-            if tester_rect.y < (FROG_SIZE*2) or tester_rect.y > SCREEN_HEIGHT -(FROG_SIZE*2):
+            if tester_rect.y < (edge_margin) or tester_rect.y > SCREEN_HEIGHT -(edge_margin):
                 return False
             
             for car in self.get_all_car_rects():
@@ -225,40 +265,59 @@ class Frogger_Board():
             return True
         
         def determine_priority_direction():
-            horizontal = True
-            dir_list = []
-            if abs(self.frog.x_weight)-3 > abs(self.frog.y_weight):
-                # "-3" arbitrary choice because of the aspect ratio. the video is not 1:1 after all, screen do be wide
-                horizontal = False
+            nonlocal edge_margin
+            possible_dirs = ["up", "down", "left", "right"]
 
-            if horizontal:
-                if self.frog.x_weight < 0: #arbitrary, prioritizing left over right
-                    dir_list.append("right") 
-                    dir_list.append("left")
-                else:
-                    dir_list.append("left")
-                    dir_list.append("right") 
-                dir_list.append("up")
-                dir_list.append("down") 
-            else:
-                if self.frog.y_weight <= 0: #arbitrary, prioritizing up over down
+            if self.frog.y - self.frog.increment_move_y < edge_margin: #check if frog close to edge
+                possible_dirs.remove("up")
+            if self.frog.y + self.frog.h + self.frog.increment_move_y > SCREEN_HEIGHT - edge_margin:
+                possible_dirs.remove("down")
+            if self.frog.x - self.frog.increment_move_x < edge_margin:
+                possible_dirs.remove("left")
+            if self.frog.x + self.frog.w + self.frog.increment_move_x > SCREEN_WIDTH - edge_margin:
+                possible_dirs.remove("right")
+                    
+            dir_list = []
+            if self.frog.y_weight <= 0: #arbitrary, prioritizing up over down
+                if "up" in possible_dirs:
                     dir_list.append("up")
+                if "down" in possible_dirs:
                     dir_list.append("down") 
-                else:
-                    dir_list.append("down")
+            else:
+                if "down" in possible_dirs:
+                    dir_list.append("down") 
+                if "up" in possible_dirs:
                     dir_list.append("up")
-                dir_list.append("left")
-                dir_list.append("right") 
+            
+            #not sure if i need this at all, emergency situations need vertical movement
+            rest_of_list = []
+            if "left" in possible_dirs and "left" not in dir_list:
+                rest_of_list.append("left")
+            if "right" in possible_dirs and "right" not in dir_list:
+                rest_of_list.append("right")
+
+
+            random.shuffle(rest_of_list)
+            dir_list.extend (rest_of_list)
+            
+
+            if self.frog.weight_too_light_to_care():
+                random.shuffle(dir_list)
                 
             return dir_list
         
         for dir in determine_priority_direction():
             if frog_can_move_there(dir):
                 self.frog.change_position(dir)
-                self.move_cooldown = 10
+                self.move_cooldown = 35 #TODO: needs to be a constant
                 return
         
         print("WARNING: Car crash detected - maybe tweak some car generation parameters to give the frog more room to move?")
+        #nowhere to move? at least run away from the car....
+        if (self.frog.y_weight % 2) == 0:
+            self.frog.change_position("left")
+            return
+        self.frog.change_position("right")
         return
 
 
@@ -266,14 +325,6 @@ class Frogger_Board():
         sum_of_dividers = self.divider_thickness*(self.__lane_count-1)
         sum_of_lanes = SCREEN_HEIGHT - sum_of_dividers
         return sum_of_lanes/self.__lane_count
-
-    def __init_lanes(self):
-        for i in range (0,self.__lane_count):
-            direction = "left"
-            if i%2 == 1: #alternate left and right
-                direction = "right"
-            self.lanes.append(Frogger_Lane(direction,self.__initspeed,self.__get_lane_y_value(i),self.__lanesize)) 
-            #for now it's one speed fits all. i can absolutely change this later.
 
     def __get_lane_y_value(self,index):
         i = 0
