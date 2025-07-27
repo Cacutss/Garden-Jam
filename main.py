@@ -1,9 +1,9 @@
 import window
-from welcome_screen import show_instruction_screen
+from tk_welcome_screen import show_instruction_screen_tk
 
 def main():
     # Show the Pygame welcome window (with "Upload" button)
-    audio_path = show_instruction_screen()
+    audio_path = show_instruction_screen_tk()
     if not audio_path:
         print("No audio file selected.")
         return

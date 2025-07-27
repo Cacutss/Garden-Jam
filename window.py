@@ -6,7 +6,7 @@ import subprocess
 import audio_extractor
 import threading
 import queue
-import export_video
+
 from constants import *
 
 def get_next_filename(base_name="output", extension="mp4", folder="output"):
@@ -96,7 +96,8 @@ class Window():
         frog = self.frogboard.get_frog_rect()
         for car in cars:
             draw_rect(car,self.screen,CAR_COLOR_LEFT)
-        draw_rect(frog,self.screen,FROG_COLOR)
+        
+        self.frogboard.frog.draw(self.screen)
 
     def run(self):
         pygame.init()
