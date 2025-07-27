@@ -4,42 +4,52 @@ from pathlib import Path
 import os
 import soundfile as sf
 
+from typing import List #for documentation
+
+FILE_PATH_DEBUG = Path('Test assets')/'beeps.wav'
+TARGET_FPS = 60
+NUM_BIN_RANGES = 10 #these are decided by the way the visualizer is designed
+NUM_BINS = 1024 #these are then divided into ranges based on an exponential scale that represents how frequencies work.
+DEBUG = True
+
+
 """
-The purpose of this file (and class) is to take an audio file path, extract the audio data from it, and convert it into data that us usable in pygame.
+The purpose of this file (and class) is to take an audio file path, extract the audio data from it, and convert it into data that is usable in pygame.
+This file can actually be used as a library by itself to pass the same kind of data to any other visualizer project :)
 
 To initialize: 
-Audio = AudioDataSet(path/to/your/file.wav)
+Audio = AudioDataSet(path/to/your/file.wav, tempo = None)
+If you do not initialize with a tempo value, librosa will try to compute it on it's own.
 
 To get the number of frames to render:
 num_frames = Audio.get_total_frames()
 
 To get the data for a single frame:
+ranges = Audio.get_visual_ranges(frame_index, direction= "center" (default) or "left" or "right")
+Returns 0-255 values for 10 frequency bands:
+31Hz, 62Hz, 125Hz, 250Hz, 500Hz, 1kHz, 2kHz, 4kHz, 8kHz, 16kHz
 
-ranges = Audio.get_visual_ranges(frame_index, direction= "left" (default) or "right" or "center")
-
-This will output a list of values between 0-255 (0 = silent, 255 = peak amplitude) on each frequency band
-You can see what the bands are in Audio.list_freq_ranges
+To get the tempo/BPM:
+Audio.get_bpm()
 
 by default each one of those lists will have 10 entries, where 0 index is for the lowest notes and 9 index is for the highest notes.
 
 """
-FILE_PATH = Path('Test assets')/'beeps.wav'
-
-TARGET_FPS = 60
-
-NUM_BIN_RANGES = 10 #these are decided by the way the visualizer is designed
-
-NUM_BINS = 1024 #these are then divided into ranges based on an exponential scale that represents how frequencies work.
-
-DEBUG = True
 
 class AudioDataSet():
 
-    def __init__(self,filepath):
+    def __init__(self,filepath,tempo = None):
+    
+        if not Path(filepath).exists():
+            raise FileNotFoundError(f"Audio file not found: {filepath}")
 
         self.is_stereo = True
 
-        raw_audio, self.__sample_rate = sf.read(filepath)
+        try:
+            raw_audio, self.__sample_rate = sf.read(filepath)
+        except Exception as e:
+            raise ValueError(f"Could not read audio file: {e}")
+        
         hop_length = int(self.__sample_rate / TARGET_FPS)
         #Normally this would be 44100 / 60 = 735 - but this supports 48000 and other sample rates too :)
 
@@ -75,10 +85,26 @@ class AudioDataSet():
         self.__processed_center = []
         
         total_frames = self.__left_magnitude.shape[1]
+
+
+        #Tempo initialization
+        self.tempo = tempo
+        if self.tempo == None:
+            print("No tempo detected, computing BPM...")
+            self.tempo, _ = librosa.beat.beat_track(
+            y=self.__left_channel, 
+            sr=self.__sample_rate,
+            hop_length=int(self.__sample_rate / TARGET_FPS)  # Match your existing hop_length
+            )
+            print(f"BPM detected: {self.tempo:.1f}")
+        
+        if total_frames > 50000:
+            print(f"Warning: Large file ({total_frames} frames). This may use significant memory.")
+                 
         for frame_index in range(total_frames):
             # Process each frame
-            left_frame = self.get_visual_ranges_init(frame_index, "left")
-            right_frame = self.get_visual_ranges_init(frame_index, "right")
+            left_frame = self._compute_visual_ranges(frame_index, "left")
+            right_frame = self._compute_visual_ranges(frame_index, "right")
             
             # Compute center (max of left/right)
             center_frame = []
@@ -105,11 +131,16 @@ class AudioDataSet():
         
         return n[:, frame_index]
     
+    def get_tempo(self) -> float:
+        """Get the BPM of the audio file"""
+        return float(self.tempo)
+    
     def map_bins_to_ranges(self,frame_data):
         #Each bin has a numeric frequency value attached to it - which should be assigned to the smallest freq range that is equal or larger than that value.
         #self.__list_freq_ranges = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]
         #so 23hz is assigned to 31hz band, 628hz is assigned to 1000hz band, 5000 is assigned to 8000 and so on...
         range_values = [0.0] * self.num_of_ranges
+        range_counts = [0] * self.num_of_ranges
         for bin_index in range(len(self.__frequencies_to_assign)):
             i = 0
             freq = self.__frequencies_to_assign[bin_index]
@@ -117,12 +148,20 @@ class AudioDataSet():
             while i < self.num_of_ranges:
                 if freq <= self.list_freq_ranges[i]: #Tries to assign to current frequency band
                     range_values[i] += magnitude
+                    range_counts[i] += 1
                     break #Success, can move on to the next for loop iteration.
                 else:
                     i += 1 #Fails, if there's a larger band - try there instead.
+
+            # Average when needed
+            for i in range(self.num_of_ranges):
+                if range_counts[i] > 0:
+                    #range_values[i] /= range_counts[i]
+                    pass #leaving this in to debug easily
+
         return range_values 
     
-    def get_total_frames(self):
+    def get_total_frames(self) -> int:
         #Get total number of audio frames available
         return self.__left_magnitude.shape[1]
     
@@ -151,7 +190,7 @@ class AudioDataSet():
         return dbfs_ranges
 
         
-    def get_visual_ranges_init(self, frame_index, direction="center"):
+    def _compute_visual_ranges(self, frame_index, direction="center"):
         # This is the "master function" that takes a frame index and a direction and returns the frame magnitude data in that direction
         # By default - it will return the max values of either L/R as a representation of centered audio.
         # it also scales the result to a 0-255 range (perfect for RGB values to use in pygame).
@@ -172,7 +211,7 @@ class AudioDataSet():
         
         raise Exception (f"ERROR: Invalid direction string: {direction}")
     
-    def get_visual_ranges(self, frame_index, direction="center"):
+    def get_visual_ranges(self, frame_index: int, direction: str ="center") -> List[int]:
         #and this is the one that's posing as the master function but it acually just returns a value.
         #much better performance wise to generate everything at the init stage than to calculate it every time.
         if direction == "center":
@@ -188,7 +227,7 @@ class AudioDataSet():
         
 
 if DEBUG:
-    n = AudioDataSet(FILE_PATH)
+    n = AudioDataSet(FILE_PATH_DEBUG)
     
     print(f"Num_Of_Frames: {n.get_total_frames()}")
     
