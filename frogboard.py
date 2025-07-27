@@ -174,7 +174,7 @@ class Frogger_Board():
 
         if self.move_cooldown != 0:
             return False
-        if random.randint(1, 10) == 1: #wanders around even if it does not need to
+        if random.randint(1, 15) == 1: #wanders around even if it does not need to
             return True
 
         def indentify_frog_lane():
@@ -260,7 +260,7 @@ class Frogger_Board():
                 self.move_cooldown = 10
                 return
         
-        print("WARNING: Car crash detected - maybe tweak some car generation parameters?")
+        print("WARNING: Car crash detected - maybe tweak some car generation parameters to give the frog more room to move?")
         return
 
 
@@ -287,18 +287,37 @@ class Frogger_Board():
     
     def generate_car(self,range_index,direction = "center"):
 
-        if direction == "center": #recursive call to both left and right if it's on center - 2 cars will be generated if that's the case.
-            self.generate_car(range_index,"left")
-            self.generate_car(range_index,"right")
-            return
+        actual_direction = direction
+        if direction == "center": #just pick at random. 
+            if random.randint(0,1) == 1:
+                actual_direction = "left"
+            else:
+                actual_direction = "right"
 
-        # pick a random lane with the correct direction and have that lane use it's own generate_car method
+        # pick a random lane with the actual direction and have that lane use it's own generate_car method
         lanes_with_right_direction = []
         for entry in self.lanes:
-            if entry.direction == direction:
+            if entry.direction == actual_direction:
                 lanes_with_right_direction.append(entry)
+
+        #below is a silly way to map range index to lane choice.
+        #lane counts are hardcoded i know (hi lane), but it's 3am and refactoring it at this point would require too valuable time to co-ordinate.
+        #if it gets enough attention i'll refactor it for all sane lane counts, i promise :)
+
+        if range_index >= 10 or range_index < 0:
+            raise ValueError (f"range_index out of range: {range_index}")
+        elif range_index < 3:
+            range = [5,6]
+        elif range_index < 6:
+            range = [2,3,4]
+        elif range_index < 10:
+            range = [0,1]
+        
+        lanes_to_choose_from = []
+        for entry in range:
+            lanes_to_choose_from.append(lanes_with_right_direction[entry])
             
-        lane_to_generate = random.choice(lanes_with_right_direction)
+        lane_to_generate = random.choice(lanes_to_choose_from)
         lane_to_generate.generate_car(range_index)
 
     
