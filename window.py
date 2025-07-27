@@ -1,4 +1,5 @@
 import pygame
+import os
 import numpy
 import frogboard
 import subprocess
@@ -7,6 +8,23 @@ import threading
 import queue
 import export_video
 from constants import *
+
+def get_next_filename(base_name="output", extension="mp4", folder="output"):
+    """
+    Returns a filename that does not already exist, by adding a number if needed.
+    For example: output.mp4, output_1.mp4, output_2.mp4, etc.
+    """
+    os.makedirs(folder, exist_ok=True)
+    counter = 0
+    while True:
+        if counter == 0:
+            filename = f"{base_name}.{extension}"
+        else:
+            filename = f"{base_name}_{counter}.{extension}"
+        file_path = os.path.join(folder, filename)
+        if not os.path.exists(file_path):
+            return file_path
+        counter += 1
 
 class Bar:
     def __init__(self,x:int,y:int,width:int):
@@ -82,14 +100,18 @@ class Window():
 
     def run(self):
         pygame.init()
-        #you can change display flags, example : pygame.FULLSCREEN gives you fullscreen duh, there's also filters you can apply here.
         pygame.display.set_caption("Visualizer")
+
+        #you can change display flags, example : pygame.FULLSCREEN gives you fullscreen duh, there's also filters you can apply here.
+       
         #framecount is the count used to name frames in temp_frames folder
         #totalframes is the number we iterate on to create each frame
+
         totalframes = self.audio_data.get_total_frames()
         frame_queue = queue.Queue(maxsize=10)
-        saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,export_video.get_next_filename(),self.audio_path))
+        saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,get_next_filename(),self.audio_path))
         saving_thread.start()
+
         for i in range(0,10):
             #divides the screen in 10 to fit all 10 bar groups
             x = int(WIN_WIDTH *(i/10))
