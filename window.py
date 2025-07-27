@@ -96,8 +96,7 @@ class Window():
         frog = self.frogboard.get_frog_rect()
         for car in cars:
             draw_rect(car,self.screen,CAR_COLOR_LEFT)
-        
-        self.frogboard.frog.draw(self.screen)
+        draw_rect(frog,self.screen,FROG_COLOR)
 
     def run(self):
         pygame.init()
