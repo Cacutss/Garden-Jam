@@ -1,5 +1,5 @@
-import pygame    # For creating windows, buttons, and handling graphics/input
-import sys       # For clean program exit
+import pygame
+import sys
 import subprocess  # For running external file dialog as a separate process
 
 def open_file_dialog_subprocess():
@@ -13,10 +13,10 @@ def open_file_dialog_subprocess():
     return file_path or None                     # Return the chosen path, or None if canceled
 
 def show_instruction_screen():
-    pygame.init()                               # Initialize pygame modules    
-    font_inst = pygame.font.Font("./resources/fonts/Wash Your Hand.ttf", 40)        # Set font for instructions and button
-    font_button = pygame.font.Font("./resources/fonts/Super Comic.ttf", 25)
-    screen = pygame.display.set_mode((950, 550))  # Create window of given size
+    pygame.init()                                  
+    font_inst = pygame.font.Font("./resources/fonts/Wash Your Hand.ttf", 30)        
+    font_button = pygame.font.Font("./resources/fonts/Super Comic.ttf", 20)
+    screen = pygame.display.set_mode((620, 550))  
     background = pygame.image.load("./resources/images/background_welcome_screen.png")
     click_sound = pygame.mixer.Sound("./resources/sounds/click.wav")
     clock = pygame.time.Clock()
@@ -25,7 +25,7 @@ def show_instruction_screen():
         "Click the button below to upload an audio file.",
         "Visualization will start after file selection."
     ]
-    button_rect = pygame.Rect(300, 200, 350, 60)      # Define button size and position
+    button_rect = pygame.Rect(340, 450, 250, 60)      # Define button size and position
     button_text = font_button.render("Upload Audio File", True, (0,0,0))  # Render button text
 
 
@@ -52,7 +52,6 @@ def show_instruction_screen():
                     pygame.quit()               # Close instruction (welcome) window
                     return audio_path           # Pass file path back to main program
 
-        #screen.fill((30, 30, 30))               # Fill background with dark color
         y = 30
         screen.blit(background, (0, 0))
         for line in instructions:

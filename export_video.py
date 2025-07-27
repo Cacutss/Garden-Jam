@@ -1,6 +1,6 @@
 import subprocess
 import os
-import welcome_screen
+
 
 def ensure_folder_not_empty(folder):
     """
@@ -51,8 +51,6 @@ def get_next_filename(base_name="output", extension="mp4", folder="output"):
 
 
 def merge_export(audio_path):
-    #audio_path = audio_path()
-    #output_path = 
     output_path = get_next_filename()  # Find a name that does not already exist
     result = None
     try:
