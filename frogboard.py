@@ -317,13 +317,3 @@ class Frogger_Board():
             
         lane_to_generate = random.choice(lanes_to_choose_from)
         lane_to_generate.generate_car(range_index)
-
-    
-        
-    
-    
-
-
-
-    
-
