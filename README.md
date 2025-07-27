@@ -3,6 +3,7 @@ An audio visualizer with a twist, gives you a customized per audio self-playing 
 created in pygame and ffmpeg for [boot.dev](https://boot.dev)'s 2025 Hackathon!
 ## Requirements
 * **Python 3.12+**
+* **[ffmpeg](https://ffmpeg.org/download.html)**
 * **[uv](https://github.com/astral-sh/uv#installation)**
 ## Installation
 If you don't have **uv** installed, you can install it [here](https://github.com/astral-sh/uv#installation).
