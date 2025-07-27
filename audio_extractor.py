@@ -10,7 +10,7 @@ FILE_PATH_DEBUG = Path('Test assets')/'beeps.wav'
 TARGET_FPS = 60
 NUM_BIN_RANGES = 10 #these are decided by the way the visualizer is designed
 NUM_BINS = 1024 #these are then divided into ranges based on an exponential scale that represents how frequencies work.
-DEBUG = False
+DEBUG = False #if at any point this says true, feel free to turn it back to false. it'll save you some pain :)
 
 
 """
