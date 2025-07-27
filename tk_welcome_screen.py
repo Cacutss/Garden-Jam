@@ -50,9 +50,8 @@ def show_instruction_screen_tk():
         if audio_path:
             selected_audio = audio_path
             root.destroy()  # close window to proceed
-            # Pass audio_path to your main program as needed
-            # You may want to return it or save to a global variable
-        
+            # Pass audio_path to main program as needed
+          
     # Styled button
     button = tk.Button(
         root, text="Upload Audio File",
@@ -66,7 +65,6 @@ def show_instruction_screen_tk():
     root.mainloop()
     return selected_audio
 
-# Call in your main.py:
 if __name__ == "__main__":
     show_instruction_screen_tk()
-    # Proceed to your Pygame game window after
+    # Proceed to Pygame game window after
