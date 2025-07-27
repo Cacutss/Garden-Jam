@@ -23,6 +23,10 @@ source .venv/bin/activate
 ```
 uv add librosa pygame ffmpeg-python numpy scipy pillow
 ```
+Note: if you are on **Linux** you might need to install tkinter
+```
+sudo apt-get install python3-tk
+```
 ### Now we need to install [ffmpeg](https://ffmpeg.org/download.html), to install use your preferred method [here](https://ffmpeg.org/download.html).
 ## Usage
 ### To run JamFrog you can execute the main.py file with
