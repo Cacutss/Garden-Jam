@@ -1,4 +1,3 @@
-import export_video
 import window
 from welcome_screen import show_instruction_screen
 
@@ -12,7 +11,6 @@ def main():
     gamewindow = window.Window(audio_path)
     gamewindow.run()
     # create_window(audio_path)   # Launch visualization as needed
-
 
 if __name__ == "__main__":
     main()
