@@ -13,8 +13,7 @@ def main():
     if result == wx.ID_OK:
         print(dialog.GetPath())     # Output the selected file path to stdout (read by your main script)
     dialog.Destroy()                # Clean up dialog window
-    sys.exit(0)                     # Exit the script
-
+    sys.exit(0)                     
 
 
 if __name__ == "__main__":
