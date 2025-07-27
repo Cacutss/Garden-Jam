@@ -1,5 +1,6 @@
 import random
 import pygame
+from constants import *
 
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
@@ -7,8 +8,6 @@ SCREEN_HEIGHT = 1080
 LANE_COUNT = 15 # MUST BE AN ODD NUMBER
 if (LANE_COUNT % 2 != 1) or (LANE_COUNT < 1):
     raise ValueError ("LANE_COUNT must be a positive odd number!")
-
-SIZE = 25
 
 """
 The purpose of this file (and classes) is to handle the frogger game board logic
@@ -73,7 +72,7 @@ class Frogger_Car():
         self.x = x
         self.y = y
         self.w = (int(range_index*3)) + min_length #converting the 0-255 value to a more reasonable value visually, this is fully arbitrary
-        self.h = SIZE #arbitrary, can change later.
+        self.h = CAR_HEIGHT #arbitrary, can change later.
 
         self.rect = pygame.Rect(self.x, self.y,self.w,self.h)
 
@@ -141,9 +140,9 @@ class Frogger_Board():
         self.frog = self.__init_frog()
 
     def __init_frog(self):
-        x = (SCREEN_WIDTH/2) - (SIZE/2)
-        y = (SCREEN_HEIGHT/2) - (SIZE/2)
-        size = SIZE
+        x = (SCREEN_WIDTH/2) - (FROG_SIZE/2)
+        y = (SCREEN_HEIGHT/2) - (FROG_SIZE/2)
+        size = FROG_SIZE
         gap_between_lanes = self.__lanesize + self.divider_thickness
         return Froggy(x,y,size,gap_between_lanes)
     
@@ -215,9 +214,9 @@ class Frogger_Board():
         def frog_can_move_there(direction):
             tester_rect = move_checker(self.frog.rect.copy(),direction)
 
-            if tester_rect.x < (SIZE*2) or tester_rect.x > SCREEN_WIDTH -(SIZE*2): #corner detection. not exact and that's ok. we need some breathing room.
+            if tester_rect.x < (FROG_SIZE*2) or tester_rect.x > SCREEN_WIDTH -(FROG_SIZE*2): #corner detection. not exact and that's ok. we need some breathing room.
                 return False
-            if tester_rect.y < (SIZE*2) or tester_rect.y > SCREEN_HEIGHT -(SIZE*2):
+            if tester_rect.y < (FROG_SIZE*2) or tester_rect.y > SCREEN_HEIGHT -(FROG_SIZE*2):
                 return False
             
             for car in self.get_all_car_rects():

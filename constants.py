@@ -8,3 +8,10 @@ CAR_COLOR_LEFT=(0,150,255)
 CAR_COLOR_RIGHT=(255,20,43)
 FROG_COLOR=(255,255,255)
 BAR_TRANSPARENCY = 40
+
+CAR_WIDTH_BASE = 25
+CAR_HEIGHT = 25
+CAR_SPEED = 20
+FROG_SIZE = 25 #x and y
+
+DEFAULT_BPM = 120 #for now, will need deletion once auto bpm detection is fixed
