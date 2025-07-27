@@ -8,8 +8,6 @@ import queue
 import export_video
 from constants import *
 
-AUDIO_FILE="./Test assets/beeps.wav"
-
 class Bar:
     def __init__(self,x:int,y:int,width:int):
         self.rect = pygame.Rect((x,y),(width,0))
@@ -54,7 +52,7 @@ def draw_rect(rect,screen,color):
 
 class Window():
     def __init__(self,audio_path):
-        self.screen = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT),pygame.SRCALPHA,pygame.HIDDEN)
+        self.screen = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT),pygame.SRCALPHA)
         self.audio_path = audio_path
         self.audio_data = audio_extractor.AudioDataSet(audio_path)
         self.bargroups = []  
@@ -90,7 +88,7 @@ class Window():
         #totalframes is the number we iterate on to create each frame
         totalframes = self.audio_data.get_total_frames()
         frame_queue = queue.Queue(maxsize=10)
-        saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,export_video.get_next_filename()))
+        saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,export_video.get_next_filename(),self.audio_path))
         saving_thread.start()
         for i in range(0,10):
             #divides the screen in 10 to fit all 10 bar groups
@@ -106,6 +104,9 @@ class Window():
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
+                    frame_queue.put(None)
+                    frame_queue.join()
+                    saving_thread.join()
                     return 0
             #updates everything
             self.update(data)
@@ -119,7 +120,7 @@ class Window():
         frame_queue.join()
         saving_thread.join()
 
-def save_frame_temp(queue,output_path):
+def save_frame_temp(queue,output_path,audio_path):
     print("starting saving thread")
     ffmpeg_cmd = [
             'ffmpeg',
@@ -129,7 +130,7 @@ def save_frame_temp(queue,output_path):
             '-s', f"{WIN_WIDTH}x{WIN_HEIGHT}",
             '-r', "60",
             '-i', 'pipe:',
-            "-i", AUDIO_FILE,          # Path to your audio file (handle spaces with quotes or as a list element)
+            "-i", audio_path,          # Path to your audio file (handle spaces with quotes or as a list element)
             '-c:v', 'libx264',
             '-preset', 'ultrafast',
             '-crf', '23',
