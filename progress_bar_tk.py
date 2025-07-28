@@ -10,7 +10,7 @@ root.attributes('-topmost', True)          # Keep this window always on top
 
 # Desired window size
 window_width = 420
-window_height = 80
+window_height = 45
 
 # Get the screen size
 screen_width = root.winfo_screenwidth()
