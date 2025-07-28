@@ -142,10 +142,10 @@ def draw_rect(rect,screen,color):
     pygame.draw.rect(surface=screen,color=color,rect=rect)
 
 class Window():
-    def __init__(self,audio_path, tempo = None):
+    def __init__(self,audio_data, tempo = None):
         self.screen = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT),pygame.SRCALPHA)
-        self.audio_path = audio_path
-        self.audio_data = audio_extractor.AudioDataSet(audio_path,tempo)
+        self.audio_data = audio_data
+        print(audio_data.tempo)
         self.bargroups = []  
         self.car_cooldown = [0,0,0,0,0,0,0,0,0,0]
         self.frogboard = frogboard.Frogger_Board()
@@ -218,7 +218,7 @@ class Window():
 
         totalframes = self.num_frames #unneccesary unless it's a refactor 5 hours before deadline :p
         frame_queue = queue.Queue(maxsize=10)
-        saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,get_next_filename(),self.audio_path))
+        saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,get_next_filename(),self.audio_data.filepath))
         saving_thread.start()
 
         for i in range(0,10):

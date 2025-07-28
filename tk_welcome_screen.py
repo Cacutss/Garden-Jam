@@ -87,6 +87,7 @@ def show_instruction_screen_tk():
                 import audio_extractor
                 # Build AudioDataSet and update progress bar as each frame is processed
                 nonlocal dataset
+                print("here")
                 dataset = audio_extractor.AudioDataSet(
                     audio_path,
                     progress_callback=update_progress_bar

@@ -43,7 +43,7 @@ class AudioDataSet():
         self.filepath = filepath
         proccess_bpm = False
         if tempo == None:
-            process_bpm = True
+            proccess_bpm = True
     
         if not Path(filepath).exists():
             raise FileNotFoundError(f"Audio file not found: {filepath}")

@@ -16,6 +16,7 @@ def is_there_tempo():
             returnval = int(arg)
         if tempo == True and isinstance(returnval,int):
             return returnval
+    return None
         
 def main():
     tempo = is_there_tempo()
