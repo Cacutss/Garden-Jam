@@ -2,6 +2,7 @@
 .venv
 *.toml
 uv.lock
+progress.txt
 **/__pycache__/
 **/temp_frames/
 **/output/
