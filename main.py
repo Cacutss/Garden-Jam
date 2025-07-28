@@ -27,7 +27,7 @@ def main():
     print("Audio file selected:", audio_dataset.filepath) 
     
     #Launch the standalone progress bar window
-    progressbar_proc = subprocess.Popen(["python3", "progress_bar_tk.py"])
+    progressbar_proc = subprocess.Popen([sys.executable, "progress_bar_tk.py"])
 
     gamewindow = window.Window(audio_dataset)
     gamewindow.run()
