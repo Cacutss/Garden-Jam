@@ -44,7 +44,7 @@ def main():
     if os.name == "nt":
         os.startfile(path)
     else:
-        if "Windows" in platform.uname().release:
+        if "Microsoft" in platform.uname().release:
             os.system(f"explorer.exe {output_path}")
         else:
             subprocess.Popen(['xdg-open',output_path])
