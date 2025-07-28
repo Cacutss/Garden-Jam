@@ -9,6 +9,7 @@ import queue
 
 from constants import *
 
+
 def get_next_filename(base_name="output", extension="mp4", folder="output"):
     """
     Returns a filename that does not already exist, by adding a number if needed.
@@ -69,10 +70,9 @@ def draw_rect(rect,screen,color):
     pygame.draw.rect(surface=screen,color=color,rect=rect)
 
 class Window():
-    def __init__(self,audio_path):
+    def __init__(self,audio_data):
         self.screen = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT),pygame.SRCALPHA)
-        self.audio_path = audio_path
-        self.audio_data = audio_extractor.AudioDataSet(audio_path)
+        self.audio_data = audio_data
         self.bargroups = []  
         self.car_cooldown = [0,0,0,0,0,0,0,0,0,0]
         self.frogboard = frogboard.Frogger_Board()
@@ -109,7 +109,7 @@ class Window():
 
         totalframes = self.audio_data.get_total_frames()
         frame_queue = queue.Queue(maxsize=10)
-        saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,get_next_filename(),self.audio_path))
+        saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,get_next_filename(),self.audio_data.filepath))
         saving_thread.start()
 
         for i in range(0,10):
@@ -120,6 +120,9 @@ class Window():
             #gives all the bars their unique spacing
             self.bargroups.append(BarGroup(amount=4,x = x,width=width,barwidth=int(width/4)))
         for frame in range(totalframes):
+            percent = int((frame + 1) / totalframes * 100)
+            with open("progress.txt", "w") as f:
+                f.write(str(percent))
             print(f"{frame}/{totalframes}")
             self.screen.fill((0,0,0))
             data = self.audio_data.get_visual_ranges(frame_index=frame)
@@ -133,10 +136,12 @@ class Window():
             #updates everything
             self.update(data)
             #draws everything
-            self.draw()
+            self.draw()           
+            
             pygame.display.update()
-            #saves screen to folder
+            
             frame_queue.put(self.screen.copy())
+            
         pygame.quit()
         frame_queue.put(None)
         frame_queue.join()
