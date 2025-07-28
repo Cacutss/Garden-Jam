@@ -8,9 +8,7 @@ Jam to the music as the little frog commits repeated traffic violations, coloriz
 * **[ffmpeg](https://ffmpeg.org/download.html)**
 * **[uv](https://github.com/astral-sh/uv#installation)**
 * **The audio file that you want to visualize - use a .wav file, if you don't the musical overnerds will smite you :)**
-
 * Testing of the application was successful on Linux and WSL.
-* ```
 ## Installation
 Clone the repository or download the ZIP archive and extract its contents.
 ```
@@ -33,12 +31,12 @@ source .venv/bin/activate
 ```
 uv add librosa pygame numpy scipy pillow
 ```
-Note: Linux users may need to install tkinter if it is not already present on their system.
-```
-sudo apt-get install python3-tk
-```
+Note: Linux users may need to install tkinter if it is not already present on their system.  
+For Debian / Ubuntu / Linux Mint:```sudo apt-get install python3-tk```  
+Yum:```sudo yum install python3-tkinter```  
+Dnf:```sudo dnf install python3-tkinter```
 ### Next, you'll need to install FFmpeg. You can find detailed installation instructions for your preferred method [HERE](https://ffmpeg.org/download.html).
-For Debian / Ubuntu / Linux Mint: ``` sudo apt install ffmpeg```
+For Debian / Ubuntu / Linux Mint: ``` sudo apt install ffmpeg```  
 To verify installation: ```ffmpeg -version```
 
 ## Usage
