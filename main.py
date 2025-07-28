@@ -44,8 +44,15 @@ def main():
     if os.name == "nt":
         os.startfile(path)
     else:
+<<<<<<< HEAD
         if "Microsoft" in platform.uname().release:
             os.system(f"explorer.exe {output_path}")
+=======
+        uname_info = platform.uname().release.lower()
+        if "microsoft" in uname_info or "wsl" in uname_info:
+            print("Seems you're using wsl!'")
+            print(f"Output folder is in {output_path}")
+>>>>>>> 3ca0ec9 (graceful handling)
         else:
             subprocess.Popen(['xdg-open',output_path])
 
