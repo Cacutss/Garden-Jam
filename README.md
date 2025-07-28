@@ -1,6 +1,8 @@
 # JamFrog
 An audio visualizer with a twist, gives you a customized per audio self-playing frogger!
 created in librosa, pygame and ffmpeg for [boot.dev](https://boot.dev)'s 2025 Hackathon!
+
+Jam to the music as the little frog commits repeated traffic violations, colorized!
 ## Requirements
 * **Python 3.12+**
 * **[ffmpeg](https://ffmpeg.org/download.html)**
