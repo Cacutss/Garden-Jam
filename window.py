@@ -25,6 +25,11 @@ def get_next_filename(base_name="output", extension="mp4", folder="output"):
             return file_path
         counter += 1
 
+def get_file_name(filepath):
+    filename = os.path.basename(filepath)
+    name,extension = os.path.splitext(filename)
+    return name
+
 class RGB_Cycle:
 
     def __init__(self,color): #rgb are ints that represent color, calc is whether that value should increase or not.
@@ -145,7 +150,6 @@ class Window():
     def __init__(self,audio_data, tempo = None):
         self.screen = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT),pygame.SRCALPHA)
         self.audio_data = audio_data
-        print(audio_data.tempo)
         self.bargroups = []  
         self.car_cooldown = [0,0,0,0,0,0,0,0,0,0]
         self.frogboard = frogboard.Frogger_Board()
@@ -218,7 +222,7 @@ class Window():
 
         totalframes = self.num_frames #unneccesary unless it's a refactor 5 hours before deadline :p
         frame_queue = queue.Queue(maxsize=10)
-        saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,get_next_filename(),self.audio_data.filepath))
+        saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,get_next_filename(get_file_name(self.audio_data.filepath)),self.audio_data.filepath))
         saving_thread.start()
 
         for i in range(0,10):
@@ -232,7 +236,6 @@ class Window():
             percent = int((frame + 1) / totalframes * 100)
             with open("progress.txt", "w") as f:
                 f.write(str(percent))
-            print(f"{frame}/{totalframes}")
             self.screen.fill((0,0,0))
             data = self.audio_data.get_visual_ranges(frame_index=frame,direction="center")
             for event in pygame.event.get():
@@ -320,5 +323,4 @@ def save_frame_temp(queue,output_path,audio_path):
             ffmpeg_process.wait(timeout=5) # Wait a bit
         if ffmpeg_process and ffmpeg_process.poll() is None: # If still running
             ffmpeg_process.kill() 
-        print("Saving thread finished.")
         
