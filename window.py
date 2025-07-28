@@ -229,6 +229,9 @@ class Window():
             #gives all the bars their unique spacing
             self.bargroups.append(BarGroup(amount=4,x = x,width=width,barwidth=int(width/4)))
         for frame in range(totalframes):
+            percent = int((frame + 1) / totalframes * 100)
+            with open("progress.txt", "w") as f:
+                f.write(str(percent))
             print(f"{frame}/{totalframes}")
             self.screen.fill((0,0,0))
             data = self.audio_data.get_visual_ranges(frame_index=frame,direction="center")
