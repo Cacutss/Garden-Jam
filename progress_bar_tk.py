@@ -25,7 +25,7 @@ root.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
 bar = ttk.Progressbar(root, length=400, mode='determinate')  # Create a horizontal progress bar
 bar.pack(padx=10, pady=10)
-bar["maximum"] = 100                       # Set max value to 100 (for percent completion)
+bar["maximum"] = 100 #Set max value to 100 (for percent completion)
 
 # This function checks the progress file and updates the bar
 def poll_progress():
