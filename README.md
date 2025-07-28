@@ -5,7 +5,8 @@ created in librosa, pygame and ffmpeg for [boot.dev](https://boot.dev)'s 2025 Ha
 [![Demo](https://img.youtube.com/vi/u4MCWl5zK6Q/0.jpg)](https://www.youtube.com/watch?v=u4MCWl5zK6Q)
 
 Jam to the music as the little frog commits repeated traffic violations, colorized!
-Takes an audio file and returns a video file output with a frog danging to the beats!
+
+Takes an audio file and returns a video file output with a frog dancing to the beats!
 ## Requirements
 * **Python 3.12+**
 * **[ffmpeg](https://ffmpeg.org/download.html)**
