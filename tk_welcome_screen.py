@@ -11,7 +11,7 @@ def play_click_sound(sound_path):
     sound = pygame.mixer.Sound(sound_path)
     sound.play()
 
-def show_instruction_screen_tk():
+def show_instruction_screen_tk(tempo = None):
     selected_audio = None
     dataset = None
     root = tk.Tk()                                  # Main Tkinter window
@@ -89,7 +89,8 @@ def show_instruction_screen_tk():
                 nonlocal dataset
                 dataset = audio_extractor.AudioDataSet(
                     audio_path,
-                    progress_callback=update_progress_bar
+                    progress_callback=update_progress_bar,
+                    tempo=tempo
                 )
                 root.after_idle(root.destroy)     # Close window when done
 

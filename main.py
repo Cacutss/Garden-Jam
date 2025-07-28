@@ -22,7 +22,7 @@ def is_there_tempo():
 def main():
     tempo = is_there_tempo()
     # Show the Pygame welcome window (with "Upload" button)
-    audio_dataset = show_instruction_screen_tk()
+    audio_dataset = show_instruction_screen_tk(tempo)
     if not audio_dataset:
         print("No audio file selected.")
         return
