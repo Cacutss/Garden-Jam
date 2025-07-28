@@ -39,7 +39,7 @@ by default each one of those lists will have 10 entries, where 0 index is for th
 
 class AudioDataSet():
 
-    def __init__(self,filepath,tempo = None):
+    def __init__(self, filepath, tempo = None, progress_callback = None):
 
         proccess_bpm = False
         if tempo == None:
@@ -127,6 +127,9 @@ class AudioDataSet():
             # Process each frame
             left_frame = self._compute_visual_ranges(frame_index, "left")
             right_frame = self._compute_visual_ranges(frame_index, "right")
+            # Helps to track and visualize progress with processing each frame
+            if progress_callback is not None:
+                progress_callback(frame_index + 1, total_frames)
             
             # Compute center (max of left/right)
             center_frame = []
