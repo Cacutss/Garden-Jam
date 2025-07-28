@@ -8,37 +8,43 @@ Jam to the music as the little frog commits repeated traffic violations, coloriz
 * **[ffmpeg](https://ffmpeg.org/download.html)**
 * **[uv](https://github.com/astral-sh/uv#installation)**
 * **The audio file that you want to visualize - use a .wav file, if you don't the musical overnerds will smite you :)**
+
+* Testing of the application was successful on Linux and WSL.
+* ```
 ## Installation
-Clone the repo or download it directly and unzip it
+Clone the repository or download the ZIP archive and extract its contents.
 ```
 git clone https://github.com/Cacutss/JamFrog
 ```
 If you don't have **uv** installed, you can install it [here](https://github.com/astral-sh/uv#installation).
-### Initialize the project
+### Initialize the project:
 ```
 uv init
 ```
-### Now you have to install the dependencies, if you don't want to install dependencies on your whole system, you can do so in a virtual environment. To initialize a virtual environment
+### To avoid installing dependencies globally, it is recommended to use a virtual environment. To create a virtual environment:
 ```
 uv venv
 ```
-### Now you should source into it
+### To activate your virtual environment:
 ```
 source .venv/bin/activate
 ```
-### To install dependencies use this command
+### To install the dependencies, execute the following command:
 ```
 uv add librosa pygame numpy scipy pillow
 ```
-Note: if you are on **Linux** you might need to install tkinter
+Note: Linux users may need to install tkinter if it is not already present on their system.
 ```
 sudo apt-get install python3-tk
 ```
-### Now we need to install [ffmpeg](https://ffmpeg.org/download.html), to install use your preferred method [here](https://ffmpeg.org/download.html).
+### Next, you'll need to install FFmpeg. You can find detailed installation instructions for your preferred method [HERE](https://ffmpeg.org/download.html).
+For Debian / Ubuntu / Linux Mint: ``` sudo apt install ffmpeg```
+To verify installation: ```ffmpeg -version```
+
 ## Usage
-### To run JamFrog you can execute the main.py file with
+### To launch JamFrog, execute the main.py file with the following command:
 ```
-uv run main.py
+uv run main.py 
 ```
 ### Flags
 For now there's just one flag.  
