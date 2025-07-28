@@ -43,7 +43,11 @@ def main():
     if os.name == "nt":
         os.startfile(path)
     else:
-        subprocess.Popen(['xdg-open',output_path])
+        try:
+            subprocess.Popen(['xdg-open',output_path])
+        except Exception:
+            print("Seems you don't have an xdg explorer, maybe you are on WSL?'")
+            print(f"Output saved on {output_path}")
 
 if __name__ == "__main__":
     main()
