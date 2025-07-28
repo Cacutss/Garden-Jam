@@ -30,7 +30,7 @@ def main():
     progressbar_proc = subprocess.Popen(["python3", "progress_bar_tk.py"])
 
     gamewindow = window.Window(audio_path)
-    filepath = gamewindow.run()
+    gamewindow.run()
     # create_window(audio_path)   # Launch visualization as needed
 
     #After good processing, terminate the progress bar window (if it's still open)
