@@ -1,6 +1,7 @@
 import window
 from tk_welcome_screen import show_instruction_screen_tk
 import subprocess
+import platform
 import pathlib as path
 import os
 import sys
@@ -43,11 +44,10 @@ def main():
     if os.name == "nt":
         os.startfile(path)
     else:
-        try:
+        if "Windows" in platform.uname().release:
+            os.system(f"explorer.exe {output_path}")
+        else:
             subprocess.Popen(['xdg-open',output_path])
-        except Exception:
-            print("Seems you don't have an xdg explorer, maybe you are on WSL?'")
-            print(f"Output saved on {output_path}")
 
 if __name__ == "__main__":
     main()
