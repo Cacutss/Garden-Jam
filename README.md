@@ -21,7 +21,7 @@ source .venv/bin/activate
 ```
 ### To install dependencies use this command
 ```
-uv add librosa pygame ffmpeg-python numpy scipy pillow
+uv add librosa pygame numpy scipy pillow
 ```
 Note: if you are on **Linux** you might need to install tkinter
 ```
@@ -33,3 +33,10 @@ sudo apt-get install python3-tk
 ```
 uv run main.py
 ```
+### Flags
+For now there's just one flag.  
+```
+uv run main.py --tempo (number)
+```
+accepts any positive integer and represents the tempo of the audio chosen. Why user input? because librosa is very innacurate on this part.
+You can refer to https://www.beatsperminuteonline.com/ on how to calculate those, anyways this program will try it's best to guess the audio tempo even if you don't specify it
