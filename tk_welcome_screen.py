@@ -16,11 +16,12 @@ def show_instruction_screen_tk():
     dataset = None
     root = tk.Tk()                                  # Main Tkinter window
     root.title("Welcome to Frog Jam!")
-    # Desired window size
+    
+    # Window size
     window_width = 620
     window_height = 550
 
-    # Get the screen size
+    # Get the monitor size
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
 
@@ -41,37 +42,41 @@ def show_instruction_screen_tk():
 
     # Show instruction labels at the top
     instructions = [
-        "Welcome to the Frog Jam!",
+        "Welcome to the FrogJam!",
         "Click the button below to upload an audio file.",
-        "Visualization will start after precomputing."
+        "Visualization will start after precomputing.",
+        "Please review the result upon completion."
+        
     ]
     for idx, line in enumerate(instructions):
         label = tk.Label(
             root,
             text=line,
-            font=("Arial", 16, "bold"),
+            font=("Arial", 14, "bold"),
             fg="white",
             bg="#333333"
         )
-        label.place(relx=0.5, y=30 + idx*40, anchor="n")  # Center horizontally
-
-    # Create a progress bar (initially hidden)
+        label.place(relx=0.5, y=20 + idx*28, anchor="n")  # Center horizontally    
+   
+   # Create a progress bar (initially hidden)
     progress = ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
     progress.place(x=110, y=380)
     progress.place_forget()
 
+
     def on_upload():
         nonlocal selected_audio, dataset
         play_click_sound("./resources/sounds/click.wav")
+        
         # Open file dialog for audio selection
         audio_path = filedialog.askopenfilename(
             title="Select an audio file",
-            filetypes=[("Audio Files", "*.wav *.mp3 *.ogg *.flac"), ("All Files", "*.*")]
+            filetypes=[("Audio Files", "*.wav *.mp3 *.flac"), ("All Files", "*.*")]
         )        
         
         if audio_path:
             selected_audio = audio_path
-            progress.place(x=110, y=380)         # Show the progress bar
+            progress.place(x=110, y=380) # Show the progress bar
             progress["value"] = 0
 
             # Update the progress bar from another thread safely
