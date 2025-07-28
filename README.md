@@ -6,6 +6,10 @@ created in pygame and ffmpeg for [boot.dev](https://boot.dev)'s 2025 Hackathon!
 * **[ffmpeg](https://ffmpeg.org/download.html)**
 * **[uv](https://github.com/astral-sh/uv#installation)**
 ## Installation
+Clone the repo or download it directly and unzip it
+```
+git clone https://github.com/Cacutss/JamFrog
+```
 If you don't have **uv** installed, you can install it [here](https://github.com/astral-sh/uv#installation).
 ### Initialize the project
 ```
