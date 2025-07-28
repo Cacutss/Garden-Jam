@@ -125,6 +125,9 @@ class Frogger_Lane():
 
     def update(self):
         for entry in self.cars:
+            entry.speed = self.speed
+            if self.direction == "left":
+                self.speed = 0-abs(self.speed) #this is where i compensate for speed cycle's simple iteration in window.py
             entry.update()
         for i in range (len(self.cars)-1,0, -1): #looping in reverse because that's a safer approach when deleting list entries.
             if abs(self.cars[i].x) > SCREEN_WIDTH + 1000: #dumb but effective way to detect if a car is still on screen

@@ -8,7 +8,6 @@ import threading
 import queue
 from constants import *
 
-
 def get_next_filename(base_name="output", extension="mp4", folder="output"):
     """
     Returns a filename that does not already exist, by adding a number if needed.
@@ -50,10 +49,51 @@ class RGB_Cycle:
         if self.phase == 4: self.color[0] += 1
         if self.phase == 5: self.color[2] -= 1
 
-
     def get_color(self):
         return self.color[0],self.color[1],self.color[2]
+    
+class Speed_Cycle: #makes the cars dance to rhythm
+    def __init__(self,tempo,start_frame,end_frame):
+        
+        self.init_speed = CAR_SPEED
+        self.tempo = tempo
+        self.start_frame = start_frame
+        self.end_frame = end_frame
+        self.current_speed = self.init_speed
+        self.__fps = 60
+        self.cycle_toggle = 1
+        self.active_beats = self.precompute_active_beats()
 
+    def precompute_active_beats(self): #and offbeats, we divide self.frames_per_beat by 2 to also have those in the list.
+        """
+        Since frames WILL desync to music if calculated normally, i had to get a little creative.
+        This precomputes float values then rounds to the nearest frame, so gaps between beats aren't equal - they are on time though :)
+
+        """
+        active_beats = []
+        seconds_per_beat = 60 / self.tempo
+        t = (self.start_frame) / self.__fps
+        i = self.start_frame 
+
+        while i < self.end_frame: #here i is NOT an int value. i'm rounding to account for frame desync.
+            active_beats.append(round(i))
+            t += seconds_per_beat / 2 # /2 for offbeats
+            i = self.start_frame + int(round(t * self.__fps))
+        return active_beats
+
+    def cycle(self,frame_index):
+        if frame_index < self.start_frame: #music didn't start, don't start dancing
+            return
+
+        if frame_index in self.active_beats:
+            self.cycle_toggle = 0 - self.cycle_toggle
+            if self.cycle_toggle > 0:
+                self.current_speed = self.init_speed*(1.5)
+            else:
+                self.current_speed = self.init_speed*(0.5)
+ 
+    def get_speed(self):
+        return self.current_speed
 
 class Bar:
     def __init__(self,x:int,y:int,width:int):
@@ -102,13 +142,17 @@ def draw_rect(rect,screen,color):
     pygame.draw.rect(surface=screen,color=color,rect=rect)
 
 class Window():
-    def __init__(self,audio_data):
+    def __init__(self,audio_path, tempo = None):
         self.screen = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT),pygame.SRCALPHA)
-        self.audio_data = audio_data
+        self.audio_path = audio_path
+        self.audio_data = audio_extractor.AudioDataSet(audio_path,tempo)
         self.bargroups = []  
         self.car_cooldown = [0,0,0,0,0,0,0,0,0,0]
         self.frogboard = frogboard.Frogger_Board()
+        self.num_frames = self.audio_data.get_total_frames()
         self.rgb = RGB_Cycle(CAR_COLOR)
+        self.speed = Speed_Cycle(self.audio_data.tempo,self.audio_data.get_first_bpm_frame(),self.num_frames)
+        
 
     def determine_car_generation(self,frame_index):
         left = self.audio_data.get_visual_ranges(frame_index=frame_index,direction="left")
@@ -134,12 +178,22 @@ class Window():
             else:
                 self.car_cooldown[i] -= 1
 
+    def update_car_speeds(self):
+        for lane in self.frogboard.lanes:
+            lane.speed = self.speed.get_speed()
+
+    def update_bargroups(self,data):
+        for i in range(len(self.bargroups)):
+            self.bargroups[i].update(data[i])
+
     def update(self,data,frame):
         self.frogboard.update()
         self.rgb.cycle()
+        self.speed.cycle(frame)
+        self.update_car_speeds()
         self.determine_car_generation(frame)
-        for i in range(len(self.bargroups)):
-            self.bargroups[i].update(data[i])
+        self.update_bargroups(data)
+        
 
     def draw_car(self,car,screen,color):
         draw_rect(car,screen,color)
@@ -162,9 +216,9 @@ class Window():
         #framecount is the count used to name frames in temp_frames folder
         #totalframes is the number we iterate on to create each frame
 
-        totalframes = self.audio_data.get_total_frames()
+        totalframes = self.num_frames #unneccesary unless it's a refactor 5 hours before deadline :p
         frame_queue = queue.Queue(maxsize=10)
-        saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,get_next_filename(),self.audio_data.filepath))
+        saving_thread = threading.Thread(target=save_frame_temp,args=(frame_queue,get_next_filename(),self.audio_path))
         saving_thread.start()
 
         for i in range(0,10):
@@ -175,9 +229,6 @@ class Window():
             #gives all the bars their unique spacing
             self.bargroups.append(BarGroup(amount=4,x = x,width=width,barwidth=int(width/4)))
         for frame in range(totalframes):
-            percent = int((frame + 1) / totalframes * 100)
-            with open("progress.txt", "w") as f:
-                f.write(str(percent))
             print(f"{frame}/{totalframes}")
             self.screen.fill((0,0,0))
             data = self.audio_data.get_visual_ranges(frame_index=frame,direction="center")
@@ -191,12 +242,10 @@ class Window():
             #updates everything
             self.update(data,frame)
             #draws everything
-            self.draw()           
-            
+            self.draw()
             pygame.display.update()
-            
+            #saves screen to folder
             frame_queue.put(self.screen.copy())
-            
         pygame.quit()
         frame_queue.put(None)
         frame_queue.join()

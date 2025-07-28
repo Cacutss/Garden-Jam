@@ -3,6 +3,7 @@ import numpy as np
 from pathlib import Path
 import os
 import soundfile as sf
+import time
 
 from typing import List #for documentation
 
@@ -10,7 +11,7 @@ FILE_PATH_DEBUG = Path('Test assets')/'beeps.wav'
 TARGET_FPS = 60
 NUM_BIN_RANGES = 10 #these are decided by the way the visualizer is designed
 NUM_BINS = 1024 #these are then divided into ranges based on an exponential scale that represents how frequencies work.
-DEBUG = False
+
 
 
 """
@@ -38,8 +39,12 @@ by default each one of those lists will have 10 entries, where 0 index is for th
 
 class AudioDataSet():
 
-    def __init__(self,filepath,tempo = None, progress_callback=None):
-        self.filepath = filepath
+    def __init__(self,filepath,tempo = None):
+
+        proccess_bpm = False
+        if tempo == None:
+            process_bpm = True
+    
         if not Path(filepath).exists():
             raise FileNotFoundError(f"Audio file not found: {filepath}")
 
@@ -49,6 +54,9 @@ class AudioDataSet():
             raw_audio, self.__sample_rate = sf.read(filepath)
         except Exception as e:
             raise ValueError(f"Could not read audio file: {e}")
+        
+        print("Analyzing audio...")
+        
         
         hop_length = int(self.__sample_rate / TARGET_FPS)
         #Normally this would be 44100 / 60 = 735 - but this supports 48000 and other sample rates too :)
@@ -73,7 +81,8 @@ class AudioDataSet():
         else:
             # Mono - duplicate for both channels
             self.is_stereo = False
-            self.__left_magnitude = self.__right_magnitude = np.abs(librosa.stft(raw_audio,hop_length = hop_length, n_fft=NUM_BINS))
+            self.__left_channel = raw_audio
+            self.__left_magnitude = self.__right_magnitude = np.abs(librosa.stft(self.__left_channel,hop_length = hop_length, n_fft=NUM_BINS))
 
         self.num_of_ranges = 10
         self.__frequencies_to_assign = librosa.fft_frequencies(sr=self.__sample_rate, n_fft=NUM_BINS)
@@ -87,17 +96,29 @@ class AudioDataSet():
         total_frames = self.__left_magnitude.shape[1]
 
 
-        #Tempo initialization
+        #Tempo initialization, this is cursed and should probably never be used until librosa handles tempo calculations better.
+        #please just provide the bpm, thanks
         self.tempo = tempo
-        if self.tempo == None:
+        if proccess_bpm:
             print("No tempo detected, computing BPM...")
             self.__raw_tempo = librosa.beat.beat_track(
             y=self.__left_channel, 
             sr=self.__sample_rate,
             hop_length=int(self.__sample_rate / TARGET_FPS)  # Match your existing hop_length
             )[0]
-            self.tempo = float(self.__raw_tempo)
+            self.tempo = float(self.__raw_tempo.item())
             print(f"BPM detected: {self.tempo:.1f}")
+
+        # Trim silence to check first beat - this is useful for speed cycles in window.py.
+        # trimmed_audio will be the audio data without leading/trailing silence
+        # index_of_first_non_silent_sample is the sample index where the audio actually starts
+        trimmed_audio, index_of_loud_samples = librosa.effects.trim(
+            y=self.__left_channel,
+            top_db=40 # You might want to adjust this threshold. Default is 60 dB.
+        )
+        index_of_first_non_silent_sample = index_of_loud_samples[0]
+
+        self.first_relevant_frame_index = int(index_of_first_non_silent_sample / hop_length)
         
         if total_frames > 50000:
             print(f"Warning: Large file ({total_frames} frames). This may use significant memory.")
@@ -106,8 +127,6 @@ class AudioDataSet():
             # Process each frame
             left_frame = self._compute_visual_ranges(frame_index, "left")
             right_frame = self._compute_visual_ranges(frame_index, "right")
-            if progress_callback is not None:
-                progress_callback(frame_index + 1, total_frames)
             
             # Compute center (max of left/right)
             center_frame = []
@@ -121,6 +140,8 @@ class AudioDataSet():
             self.__processed_right.append(right_frame)
             self.__processed_center.append(center_frame)
 
+    def get_first_bpm_frame(self):
+        return self.first_relevant_frame_index
 
     def get_audio_frame_data(self, frame_index, direction = "left"):
         #Get magnitude data for a specific audio frame (time slice)
@@ -228,7 +249,7 @@ class AudioDataSet():
 
 
         
-
+DEBUG = True
 if DEBUG:
     n = AudioDataSet(FILE_PATH_DEBUG)
     
