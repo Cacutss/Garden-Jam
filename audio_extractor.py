@@ -40,7 +40,7 @@ by default each one of those lists will have 10 entries, where 0 index is for th
 class AudioDataSet():
 
     def __init__(self, filepath, tempo = None, progress_callback = None):
-        self.lifepath = filepath
+        self.filepath = filepath
         proccess_bpm = False
         if tempo == None:
             process_bpm = True
