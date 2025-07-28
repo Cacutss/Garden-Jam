@@ -16,7 +16,20 @@ def show_instruction_screen_tk():
     dataset = None
     root = tk.Tk()                                  # Main Tkinter window
     root.title("Welcome to Frog Jam!")
-    root.geometry("620x550")
+    # Desired window size
+    window_width = 620
+    window_height = 550
+
+    # Get the screen size
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+
+    # Calculate position for centering
+    x = (screen_width // 2) - (window_width // 2)
+    y = (screen_height // 2) - (window_height // 2)
+
+    # Set the geometry and position of the window
+    root.geometry(f"{window_width}x{window_height}+{x}+{y}")
     root.resizable(False, False)
 
     # Load and display background image

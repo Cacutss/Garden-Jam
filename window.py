@@ -6,7 +6,6 @@ import subprocess
 import audio_extractor
 import threading
 import queue
-import export_video
 from constants import *
 
 
