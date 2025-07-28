@@ -249,7 +249,7 @@ class AudioDataSet():
 
 
         
-DEBUG = True
+DEBUG = False
 if DEBUG:
     n = AudioDataSet(FILE_PATH_DEBUG)
     
