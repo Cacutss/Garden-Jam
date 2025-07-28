@@ -20,16 +20,16 @@ def is_there_tempo():
 def main():
     tempo = is_there_tempo()
     # Show the Pygame welcome window (with "Upload" button)
-    audio_path = show_instruction_screen_tk()
-    if not audio_path:
+    audio_dataset = show_instruction_screen_tk()
+    if not audio_dataset:
         print("No audio file selected.")
         return
-    print("Audio file selected:", audio_path) 
+    print("Audio file selected:", audio_dataset.filepath) 
     
     #Launch the standalone progress bar window
     progressbar_proc = subprocess.Popen(["python3", "progress_bar_tk.py"])
 
-    gamewindow = window.Window(audio_path)
+    gamewindow = window.Window(audio_dataset)
     gamewindow.run()
     # create_window(audio_path)   # Launch visualization as needed
 
